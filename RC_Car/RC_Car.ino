@@ -48,7 +48,7 @@ int center_stop = 70;    // 전방 멈춤 거리 (단위: mm)
 int side_detect = 100; // 좌우 감지 거리 (단위: mm)
 
 int prev_dir = 0;
-//float prev_speed;
+// float prev_speed;
 float prev_steering = -1000;
 int cur_dir = 0;
 float cur_speed;
@@ -186,7 +186,7 @@ void SetSpeed(float speed)
     cur_speed = speed;
 }
 void straight()
-{   // 기본주행
+{ // 기본주행
     //    Serial.print("Right : ");
     //    Serial.print(ir_sensing(IR_R));
     //    Serial.print("    Left : ");
@@ -215,25 +215,26 @@ void straight()
         compute_speed = 0.1;
     }
 
-    else if(ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir)
-        { //차선이 검출되지 않을 경우 직진
-            Serial.println("Straight");
-            compute_steering = 0;
-            cur_dir = 0;
-            compute_speed = 1;
-        }
+    else if (ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir)
+    { //차선이 검출되지 않을 경우 직진
+        Serial.println("Straight");
+        compute_steering = 0;
+        cur_dir = 0;
+        compute_speed = 1;
+    }
 
     if (cur_dir == prev_dir && cur_dir == 1)
-        {
+    {
         compute_steering = prev_steering + 0.1;
-        }
+    }
     else if (cur_dir == prev_dir && cur_dir == -1)
-        {
+    {
         compute_steering = prev_steering - 0.1;
-        }
-    else{   // 다른 dir
-        compute_steering = 0;    
-        } 
+    }
+    else
+    { // 다른 dir
+        compute_steering = 0;
+    }
 }
 
 void start()
@@ -375,23 +376,34 @@ void driving()
     //    }
 }
 
-void auto_driving(int state){
-    switch(state){
-        case 0:     // 출발
-            start();
-            break;
-        case 1:     // 평행주차
-            parking_p();
-            break;
-        case 2:     // T 주차
-//            parking_t();
-              break;
-        case 3:     // 장애물 회피
-            straight();
-            break;
-        case 4:     // 종료
-            _end();
-            break;
+void auto_driving(int state)
+{
+    switch (state)
+    {
+    case 0: // 출발
+        start();
+        break;
+    case 1: // 평행주차
+        parking_p();
+        break;
+    case 2: // 8자 주행 1
+
+        break;
+    case 3: // 8자 주행 2
+
+        break;
+    case 4: // T 주차 1
+        parking_t1();
+        break;
+    case 5: // T 주차 2
+        parking_t2();
+        break;
+    case 6: // T 주차 3
+        parking_t3();
+        break;
+
+    case 7: // 버스 피하기
+        break;
     }
 }
 
@@ -413,6 +425,40 @@ bool CheckStopLine()
         return true;
     }
     return false;
+}
+
+void parking_t1()
+{
+    // 1. 좌회전
+    if (center <= center_start)
+    {
+        compute_steering = -1;
+        compute_speed = compute_speed;
+    }
+    else
+    {
+        straight();
+    }
+}
+
+void parking_t2()
+{
+    if (right > side_detect)
+    {
+        compute_steering = compute_steering + 0.1;
+        compute_speed = -0.5;
+    }
+    else
+    {
+        compute_steering = compute_steering - 0.1;
+        compute_speed = -0.5;
+    }
+}
+
+void parking_t3()
+{
+    // 3. 전진
+    straight()
 }
 
 void setup()
