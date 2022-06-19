@@ -417,7 +417,7 @@ void setup()
 void loop() {
     if (CheckStopLine()){
         delay(3000;)
-        mode += 1;
+        state += 1;
     }
 
     compute_steering = cur_steering;
