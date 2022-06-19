@@ -26,7 +26,7 @@ float center;
 float left;
 float right;
 
-int state = 0;
+int state = 3;
 
 // 자동차 튜닝 파라미터 =====================================================================
 int detect_ir = 30; // 검출선이 흰색과 검정색 비교
@@ -48,15 +48,13 @@ int center_stop = 70;    // 전방 멈춤 거리 (단위: mm)
 int side_detect = 100; // 좌우 감지 거리 (단위: mm)
 
 int prev_dir = 0;
+float prev_speed;
+float prev_steering = -1000;
 int cur_dir = 0;
-
-float cur_steering;
-float cur_speed;
 float compute_steering;
 float compute_speed;
 
 float steer_gain = 0.5;
-float prev_steering = -1000;
 
 float max_pwm;
 float min_pwm;
@@ -101,7 +99,7 @@ int ir_sensing(int pin)
 void SetSteering(float steering)
 {
     cur_steering = constrain(steering, -1, 1); // constrain -1~ 1 값으로 제한
-    Serial.println(cur_steering);
+//    Serial.println(cur_steering);
     float angle = cur_steering * angle_limit;
     int servoAngle = angle + 90;
     servoAngle += angle_offset;
@@ -188,16 +186,16 @@ void SetSpeed(float speed)
 }
 void straight()
 { // 기본주행
-    Serial.print("Right : ");
-    Serial.print(ir_sensing(IR_R));
-    Serial.print("    Left : ");
-    Serial.println(ir_sensing(IR_L));
+//    Serial.print("Right : ");
+//    Serial.print(ir_sensing(IR_R));
+//    Serial.print("    Left : ");
+//    Serial.println(ir_sensing(IR_L));
 
-    if (start_done && center < 70 && ir_sensing(IR_L) > detect_ir)
+    if (center < center_detect && ir_sensing(IR_L) >= detect_ir)
     { // 장애물 발견
-        compute_steering = -0.6;
+        compute_steering = -1;
         cur_dir = -1;
-        compute_speed = 0.1;
+        compute_speed = 0.3;
     }
 
     else if (ir_sensing(IR_R) <= detect_ir)
@@ -216,14 +214,36 @@ void straight()
         compute_speed = 0.1;
     }
 
-    else
-        (ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir)
+    else if(ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir)
         { //차선이 검출되지 않을 경우 직진
             Serial.println("Straight");
             compute_steering = 0;
             cur_dir = 0;
             compute_speed = 1;
         }
+
+    if (cur_dir == prev_dir && cur_dir == 1)
+        {
+        compute_steering = prev_steering + 0.1;
+        }
+    else if (cur_dir == prev_dir && cur_dir == -1)
+        {
+        compute_steering = prev_steering - 0.1;
+        }
+    else{   // 다른 dir
+        compute_steering = 0;    
+        } 
+}
+void start()
+{
+    if (center < center_detect){   // 앞에 막혀 있을 때
+      Serial.print("Wait!   ");
+      Serial.println(center);
+    }
+    else{
+        Serial.println("Start!");
+        straight();
+    }
 }
 
 void parking_p()
@@ -304,11 +324,11 @@ void parking_p()
     }
 }
 
-void obstacle(){
-    if (start_done && center < 70 && ir_sensing(IR_L) > detect_ir){   // 장애물 발견
-        compute_steering = -0.6;
-        cur_dir = -1;
-        compute_speed = 0.1;
+void _end()
+{
+    if (center < 20){   // 앞에 막혀 있을 때
+      compute_steering = 0;
+      compute_speed = 0;
     }
     else{
         straight();
@@ -353,13 +373,20 @@ void driving() {
 void auto_driving(int state){
     switch(state){
         case 0:     // 출발
+            start();
+            break;
         case 1:     // 평행주차
             parking_p();
+            break;
         case 2:     // T 주차
-            parking_t();
+//            parking_t();
+              break;
         case 3:     // 장애물 회피
-            obstacle();
+            straight();
+            break;
         case 4:     // 종료
+            _end();
+            break;
     }
 }
 bool CheckStopLine()
@@ -416,13 +443,13 @@ void setup()
 
 void loop() {
     if (CheckStopLine()){
-        delay(3000;)
+        delay(3000);
         state += 1;
     }
+    Serial.println(state);
 
-    compute_steering = cur_steering;
-    compute_speed = cur_speed;
-    prev_steering = cur_steering;
+    prev_speed = compute_speed;
+    prev_steering = compute_steering;
     prev_dir = cur_dir;
 
     center = GetDistance(FC_TRIG, FC_ECHO);
@@ -430,7 +457,8 @@ void loop() {
     right = GetDistance(R_TRIG, R_ECHO);
 
     auto_driving(state);
-
+    // Serial.println("done1!");
     SetSpeed(compute_speed);
     SetSteering(compute_steering);
+//    Serial.println("done!");
 }
