@@ -101,7 +101,7 @@ int ir_sensing(int pin)
 void SetSteering(float steering)
 {
     cur_steering = constrain(steering, -1, 1); // constrain -1~ 1 값으로 제한
-    Serial.println(cur_steering);
+                                               //    Serial.println(cur_steering);
     float angle = cur_steering * angle_limit;
     int servoAngle = angle + 90;
     servoAngle += angle_offset;
@@ -187,11 +187,11 @@ void SetSpeed(float speed)
     cur_speed = speed;
 }
 void straight()
-{ // 기본주행
-    Serial.print("Right : ");
-    Serial.print(ir_sensing(IR_R));
-    Serial.print("    Left : ");
-    Serial.println(ir_sensing(IR_L));
+{   // 기본주행
+    //    Serial.print("Right : ");
+    //    Serial.print(ir_sensing(IR_R));
+    //    Serial.print("    Left : ");
+    //    Serial.println(ir_sensing(IR_L));
 
     if (start_done && center < 70 && ir_sensing(IR_L) > detect_ir)
     { // 장애물 발견
@@ -216,14 +216,27 @@ void straight()
         compute_speed = 0.1;
     }
 
+    else if (ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir)
+    { //차선이 검출되지 않을 경우 직진
+        Serial.println("Straight");
+        compute_steering = 0;
+        cur_dir = 0;
+        compute_speed = 1;
+    }
+}
+
+void start()
+{
+    if (center < center_detect)
+    { // 앞에 막혀 있을 때
+        Serial.print("Wait!   ");
+        Serial.println(center);
+    }
     else
-        (ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir)
-        { //차선이 검출되지 않을 경우 직진
-            Serial.println("Straight");
-            compute_steering = 0;
-            cur_dir = 0;
-            compute_speed = 1;
-        }
+    {
+        Serial.println("Start!");
+        straight();
+    }
 }
 
 void parking_p()
@@ -318,6 +331,19 @@ void obstacle()
     }
 }
 
+void _end()
+{
+    if (center < 20)
+    { // 앞에 막혀 있을 때
+        compute_steering = 0;
+        compute_speed = 0;
+    }
+    else
+    {
+        straight();
+    }
+}
+
 void driving()
 {
     compute_steering = cur_steering;
@@ -359,13 +385,20 @@ void auto_driving(int state)
     switch (state)
     {
     case 0: // 출발
+        start();
+        break;
     case 1: // 평행주차
         parking_p();
+        break;
     case 2: // T 주차
-        parking_t();
+            //            parking_t();
+        break;
     case 3: // 장애물 회피
         obstacle();
+        break;
     case 4: // 종료
+        _end();
+        break;
     }
 }
 bool CheckStopLine()
@@ -424,8 +457,8 @@ void loop()
 {
     if (CheckStopLine())
     {
-        delay(3000;)
-            state += 1;
+        delay(3000);
+        state += 1;
     }
 
     compute_steering = cur_steering;
@@ -438,7 +471,6 @@ void loop()
     right = GetDistance(R_TRIG, R_ECHO);
 
     auto_driving(state);
-
     SetSpeed(compute_speed);
     SetSteering(compute_steering);
 }
