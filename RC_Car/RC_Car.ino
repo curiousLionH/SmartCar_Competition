@@ -415,7 +415,7 @@ void setup()
 }
 
 void loop() {
-    if (stop_line()){
+    if (CheckStopLine()){
         delay(3000;)
         mode += 1;
     }
