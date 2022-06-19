@@ -187,8 +187,10 @@ void SetSpeed(float speed)
     cur_speed = speed;
 }
 
-void obstacle(){
-    if (center < center_stop && left < side_detect && right && side_detect){
+void obstacle()
+{
+    if (center < center_stop && left < side_detect && right && side_detect)
+    {
         compute_speed = 0;
         cur_dir = 0;
         compute_steering = 0;
@@ -200,28 +202,30 @@ void obstacle(){
         compute_speed = 0.2;
         obstacle_cnt++;
     }
-    else if (obstacle_cnt > 0 && obstacle_cnt < 100){
+    else if (obstacle_cnt > 0 && obstacle_cnt < 100)
+    {
         compute_steering = -1;
         cur_dir = -1;
         compute_speed = 0.2;
         obstacle_cnt++;
     }
-    else if (obstacle_cnt >= 100 && obstacle_cnt < 200){
+    else if (obstacle_cnt >= 100 && obstacle_cnt < 200)
+    {
         compute_steering = 0.6;
         cur_dir = 1;
         compute_speed = 0.2;
         obstacle_cnt++;
     }
-    else if (ir_sensing(IR_L) <= detect_ir){    // 왼쪽 차선 보임
+    else if (ir_sensing(IR_L) <= detect_ir)
+    { // 왼쪽 차선 보임
         compute_steering = 1;
         cur_dir = 1;
         compute_speed = 0.1;
     }
-    else{
+    else
+    {
         straight();
     }
-
-    
 }
 void straight()
 { // 기본주행
@@ -229,8 +233,6 @@ void straight()
     //    Serial.print(ir_sensing(IR_R));
     //    Serial.print("    Left : ");
     //    Serial.println(ir_sensing(IR_L));
-
-    
 
     if (ir_sensing(IR_R) <= detect_ir)
     { // 오른쪽 차선이 검출된 경우
@@ -375,23 +377,34 @@ void _end()
     }
 }
 
-void auto_driving(int state){
-    switch(state){
-        case 0:     // 출발
-            start();
-            break;
-        case 1:     // 평행주차
-            parking_p();
-            break;
-        case 2:     // T 주차
-//            parking_t();
-              break;
-        case 3:     // 장애물 회피
-            obstacle();
-            break;
-        case 4:     // 종료
-            _end();
-            break;
+void auto_driving(int state)
+{
+    switch (state)
+    {
+    case 0: // 출발
+        start();
+        break;
+    case 1: // 평행주차
+        parking_p();
+        break;
+    case 2: // 8자 주행 1
+
+        break;
+    case 3: // 8자 주행 2
+
+        break;
+    case 4: // T 주차 1
+        parking_t1();
+        break;
+    case 5: // T 주차 2
+        parking_t2();
+        break;
+    case 6: // T 주차 3
+        parking_t3();
+        break;
+
+    case 7: // 버스 피하기
+        break;
     }
 }
 
@@ -446,7 +459,7 @@ void parking_t2()
 void parking_t3()
 {
     // 3. 전진
-    straight()
+    straight();
 }
 
 void setup()
