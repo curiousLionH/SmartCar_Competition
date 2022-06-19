@@ -255,46 +255,32 @@ void start()
 
 void parking_p()
 {   
-    if(center>150){//전방에 뭐가 없을 때
+    if((ir_sensing(IR_R) > detect_ir) && (ir_sensing(IR_L) > detect_ir)){//전방에 라인 없을 때
         if(right<side_detect && left<side_detect){//양쪽 초음파 검출 -> 직진
             straight();
         }
         else if(right<170){ // 오른쪽 초음파 감지-> 왼쪽으로 회전
-            compute_speed=0.4;
+            compute_speed=0.5;
             compute_steering=-1;
         }
-        else if(ir_sensing(IR_R) <= detect_ir){
-            compute_steering=1;
-            compute_speed=-0.5;
-            SetSpeed(compute_speed);
-            SetSteering(compute_steering);
-            delay(500);
-            compute_steering=0;
-            compute_speed=0.5;
-            SetSpeed(compute_speed);
-            SetSteering(compute_steering);
-            delay(300);
-            compute_steering=0;
-            compute_speed=0;
-        }
         else { //오른쪽으로 회전
-            compute_speed=0.4;
+            compute_speed=0.5;
             compute_steering=1;
         }
     }
     else if(right<180){ //전방, 오른쪽 감지 -> 후진 후 정지
         compute_steering=0.4;
-        compute_speed=-0.4;
+        compute_speed=-0.5;
         SetSpeed(compute_speed);
         SetSteering(compute_steering);
-        delay(1000);
+        delay(1500);
         compute_steering=0;
         compute_speed=0;
         SetSpeed(compute_speed);
         SetSteering(compute_steering);
         delay(3000);
     }
-    else{ //전방에 물체 감지 -> 후진 후 왼쪽 회전
+    else{ //전방에 라인 감지 -> 후진 후 왼쪽 회전
         compute_steering=1;
         compute_speed=-0.5;
         SetSpeed(compute_speed);
@@ -304,7 +290,7 @@ void parking_p()
         compute_speed=0.5;
         SetSpeed(compute_speed);
         SetSteering(compute_steering);
-        delay(300);
+        delay(400);
         compute_steering=0;
         compute_speed=0;
     }
