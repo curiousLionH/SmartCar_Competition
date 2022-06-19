@@ -321,80 +321,42 @@ void start()
 
 void parking_p()
 {
-    compute_speed = 0.1;
-    compute_steering = 0;
-
-    //    while(!parking_p_end){
-    while (false)
+    // IR 센서에 감지 될 때 까지 전진
+    while (ir_sensing(IR_R) > detect_ir && ir_sensing(IR_L) > detect_ir)
     {
-        center = GetDistance(FC_TRIG, FC_ECHO);
-        left = GetDistance(L_TRIG, L_ECHO);
+        compute_steering = 0.5;
+        compute_speed = 0.5;
+        SetSteering(compute_steering);
+        SetSpeed(compute_speed);
+    }
+
+    while (GetDistance(FC_TRIG, FC_ECHO) < 250)
+    {
         right = GetDistance(R_TRIG, R_ECHO);
-        if (left > 100)
+        if (right > 50)
         {
-            straight();
+            // 오른쪽 뒤로
+            compute_steering = 0.5;
+            compute_speed = -0.5;
+        }
+        else if (right < 30)
+        {
+            // 왼쪽 뒤로
+            compute_steering = 0.5;
+            compute_speed = -0.5;
         }
         else
         {
-            if (flag1 && right < 50 && center > 50)
-            {
-                compute_steering += 0.3;
-            }
-            else if (flag2 && center < 50 && center > 20)
-            {
-                flag1 = false;
-                compute_steering -= 0.2;
-            }
-            else if (flag3 && center < 20)
-            {
-                flag2 = false;
-                compute_speed = -0.1;
-                compute_steering = 0;
-            }
-            else
-            {
-                flag3 = false;
-                parking_p_end = true;
-            }
+            // 그냥 뒤로
+            compute_steering = 0;
+            compute_speed = -0.5;
         }
-        SetSpeed(compute_speed);
         SetSteering(compute_steering);
-    }
-
-    // 주차 끝나고 나오기
-    while (true)
-    {
-        center = GetDistance(FC_TRIG, FC_ECHO);
-        left = GetDistance(L_TRIG, L_ECHO);
-        right = GetDistance(R_TRIG, R_ECHO);
-        if (left < 40)
-        {
-            break;
-        }
-        diff_RL = right - left;
-        compute_steering = constrain(diff_RL / 800, -1, 1);
-
-        if (center < 100)
-        {
-            compute_steering = constrain(compute_steering * 1.3, -1, 1);
-        }
-
-        else if (ir_sensing(IR_L) <= detect_ir)
-        { //왼쪽 차선이 검출된 경우
-            //            Serial.println("Right");
-            compute_steering = 1;
-            //            compute_speed = 0.1;
-        }
-
         SetSpeed(compute_speed);
-        SetSteering(compute_steering);
     }
-
-    while (true)
-    {
-        SetSpeed(0.4);
-        SetSteering(0);
-    }
+    SetSteering(0);
+    SetSpeed(0);
+    delay(5000);
 }
 
 void _end()
@@ -529,7 +491,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 6;
+    state = 1;
 }
 
 void loop()
