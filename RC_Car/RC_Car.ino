@@ -78,6 +78,8 @@ int cnt_IR_L;
 
 int cnt_IR_max = 50; // back을 하는 max 검출 카운트
 
+unsigned long last_stop_line_time;
+
 int obstacle_cnt = 0;
 bool obstacle_end = false;
 
@@ -441,6 +443,11 @@ void auto_driving(int state)
 
 bool CheckStopLine()
 {
+    // 방금 전에 정지선을 지나 온 경우
+    if (millis() - last_stop_line_time < 5000)
+    {
+        return false;
+    }
 
     if (ir_sensing(IR_R) <= detect_ir && ir_sensing(IR_L) <= detect_ir)
     {
@@ -453,6 +460,7 @@ bool CheckStopLine()
 
     if (cnt_IR_BOTH >= 5)
     {
+        last_stop_line_time = millis();
         return true;
     }
     return false;
@@ -528,12 +536,12 @@ void loop()
 {
     if (CheckStopLine())
     {
-        delay(3000);
         state += 1;
     }
-    Serial.print(ir_sensing(IR_L));
-    Serial.print("                 ");
-    Serial.println(ir_sensing(IR_R));
+    Serial.println(state);
+    // Serial.print(ir_sensing(IR_L));
+    // Serial.print("                 ");
+    // Serial.println(ir_sensing(IR_R));
     cur_speed = compute_speed;
     prev_steering = compute_steering;
     prev_dir = cur_dir;
