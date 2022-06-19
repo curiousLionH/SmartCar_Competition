@@ -304,18 +304,22 @@ void parking_p()
     }
 }
 
-void obstacle(){
-    if (start_done && center < 70 && ir_sensing(IR_L) > detect_ir){   // 장애물 발견
+void obstacle()
+{
+    if (start_done && center < 70 && ir_sensing(IR_L) > detect_ir)
+    { // 장애물 발견
         compute_steering = -0.6;
         cur_dir = -1;
         compute_speed = 0.1;
     }
-    else{
+    else
+    {
         straight();
     }
 }
 
-void driving() {
+void driving()
+{
     compute_steering = cur_steering;
     compute_speed = cur_speed;
     prev_steering = cur_steering;
@@ -345,21 +349,23 @@ void driving() {
     {
         compute_steering = prev_steering - 0.1;
     }
-//    if (prev_steering != -1000){
-//        compute_steering = compute_steering*steer_gain + prev_steering*(1-steer_gain);
-//    }
+    //    if (prev_steering != -1000){
+    //        compute_steering = compute_steering*steer_gain + prev_steering*(1-steer_gain);
+    //    }
 }
 
-void auto_driving(int state){
-    switch(state){
-        case 0:     // 출발
-        case 1:     // 평행주차
-            parking_p();
-        case 2:     // T 주차
-            parking_t();
-        case 3:     // 장애물 회피
-            obstacle();
-        case 4:     // 종료
+void auto_driving(int state)
+{
+    switch (state)
+    {
+    case 0: // 출발
+    case 1: // 평행주차
+        parking_p();
+    case 2: // T 주차
+        parking_t();
+    case 3: // 장애물 회피
+        obstacle();
+    case 4: // 종료
     }
 }
 bool CheckStopLine()
@@ -414,10 +420,12 @@ void setup()
     SetSpeed(0);
 }
 
-void loop() {
-    if (CheckStopLine()){
+void loop()
+{
+    if (CheckStopLine())
+    {
         delay(3000;)
-        state += 1;
+            state += 1;
     }
 
     compute_steering = cur_steering;
