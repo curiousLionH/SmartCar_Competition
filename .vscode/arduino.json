@@ -1,0 +1,5 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "RC_Car\\RC_Car.ino",
+    "port": "COM6"
+}
