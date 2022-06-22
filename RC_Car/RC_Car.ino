@@ -72,11 +72,10 @@ int cnt_IR_R;
 int cnt_IR_L;
 int cnt_IR_max = 50; // back을 하는 max 검출 카운트
 
-<<<<<<< HEAD
-int cnt_IR_max = 50; // back을 하는 max 검출 카운트
+int obstacle_cnt = 0;
+bool obstacle_end = false;
 
-unsigned long last_stop_line_time = 0;
-
+// 초음파 거리측정
 float GetDistance(int trig, int echo)
 {
     digitalWrite(trig, LOW);
@@ -113,7 +112,7 @@ void SetSteering(float steering)
 // 뒷바퀴 모터회전
 void SetSpeed(float speed)
 {
-    speed = constrain(speed, -1, 0.6);
+    speed = constrain(speed, -1, 1);
 
     if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
         || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
@@ -236,52 +235,75 @@ void line_tracing()
 
 void _start()
 {
-    if (center > center_start)
+    if (center > center_stop)
     {
         line_tracing();
     }
+    else{
+        compute_steering = 0;
+        compute_speed = 0;
+    }
 }
 
+int right_change=0;
+int after_back_up=0;
+int min_right=2000;
 void parking_p()
 {
-    // IR 센서에 감지 될 때 까지 전진
-    while (ir_sensing(IR_R) > detect_ir && ir_sensing(IR_L) > detect_ir)
-    {
-        compute_steering = 0.5;
-        compute_speed = 0.5;
-        SetSteering(compute_steering);
-        SetSpeed(compute_speed);
+    if(prev_right-right>100 || right-prev_right>100){
+        right_change+=1;
     }
-}
 
-    // 앞까지 거리가 25cm보다 작은 동안
-    while (GetDistance(FC_TRIG, FC_ECHO) < 300)
-    {
-        right = GetDistance(R_TRIG, R_ECHO);
-        if (right > 50)
-        {
-            // 오른쪽 뒤로
-            compute_steering = 0.5;
-            compute_speed = -0.5;
-        }
-        else if (right < 30)
-        {
-            // 왼쪽 뒤로
-            compute_steering = 0.5;
-            compute_speed = -0.5;
-        }
-        else
-        {
-            // 그냥 뒤로
-            compute_steering = 0;
-            compute_speed = -0.5;
-        }
-        SetSteering(compute_steering);
-        SetSpeed(compute_speed);
+    
+    if (millis() % 50 == 0){
+        Serial.print("right: ");
+        Serial.println(right);
+        Serial.print("change: ");
+        Serial.println(right_change);
     }
-    SetSteering(0);
-    SetSpeed(0);
-    delay(5000);
+    if(after_back_up==0){//후진 전
+        if(right_change>=3){ //후진 후 주차
+            compute_steering = 0.8;
+            compute_speed = -0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(1000);
+            after_back_up=1;
+        }
+        else{ //쭉 직진
+            line_tracing();
+        }   
+    }
+    else if(min_right==2000){ //후진 후
+        if(prev_right<right && prev_right<150){// 평행 -> 후진
+            min_right=prev_right;
+            compute_steering = -0.5;
+            compute_speed = 0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(200);
+        }
+        else{
+            compute_steering = -0.5;
+            compute_speed = -0.3;
+        }
+    }
+    else{ //min값 찾은 후 (평행)
+        if(center>150){
+            compute_steering = 0;
+            compute_speed = 0;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(3000);
+        }
+        else{
+            compute_steering = 0;
+            compute_speed = -0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(1000);
+        }
+    }
 }
 
 void parking_t1()
@@ -365,7 +387,7 @@ void obstacle()
 bool CheckStopLine()
 {
     // 방금 전에 정지선을 지나 온 경우
-    if (millis() - last_stop_line_time < 5000)
+    if (state!=0 && millis() - last_stop_line_time < 5000)
     {
         return false;
     }
@@ -394,12 +416,12 @@ void auto_driving(int state)
     case 0: // 출발
         _start();
         break;
-    case 1: // 평행주차        
-        parking_p1();
+    case 1: // 평행주차
+        parking_p();
         break;
-<<<<<<< HEAD
-    case 2:
-        parking_p2();
+    case 2: // 8자 주행 1
+        line_tracing();
+        break;
     case 3: // 8자 주행 2
         line_tracing();
         break;
@@ -417,9 +439,9 @@ void auto_driving(int state)
         break;
     }
 }
->>>>>>> 545a41ecf03996457df898b5f718c24ee3ccafca
 
 void setup()
+{
     Serial.begin(115200);
     servo.attach(SERVO1_PIN); //서보모터 초기화
 
