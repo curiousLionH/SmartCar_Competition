@@ -1,6 +1,8 @@
 #include <Servo.h>
 Servo servo;
 
+#define SPEAKER_PIN 3
+
 const int SERVO1_PIN = 9; // 서보모터1 연결핀
 const int IR_R = A3;      //  적외선센서 우측 핀
 const int IR_L = A4;      // 적외선센서 좌측 핀
@@ -245,51 +247,96 @@ void _start()
     }
 }
 
+int parallel_left(int distance)
+{
+    if (left > 150 || compute_speed == 0) {
+        // 오른쪽이 너무 멀리 있거나 정지 상태라면 판단할 수 없음 (== 평행)
+        return 0;
+    }
+    else { // 일단 전진 기준
+        int sign_speed = (compute_speed > 0) - (compute_speed < 0);
+
+        if (left-distance > 10) { // 왼쪽으로 꺾기
+            return -1 * sign_speed;
+        }
+        else if (left-distance < -10) { // 오른쪽으로 꺾기
+            return 1 * sign_speed;
+        }
+        else {
+            return 0;
+        }
+    }
+}
+int parallel_right(int distance)
+{
+    if (right > 150 || compute_speed == 0) {
+        // 오른쪽이 너무 멀리 있거나 정지 상태라면 판단할 수 없음 (== 평행)
+        return 0;
+    }
+    else { // 일단 전진 기준
+        int sign_speed = (compute_speed > 0) - (compute_speed < 0);
+
+        if (right-distance > 10) { // 오른쪽으로 꺾기
+            return 1 * sign_speed;
+        }
+        else if (right-distance < -10) { // 왼쪽으로 꺾기
+            return -1 * sign_speed;
+        }
+        else {
+            return 0;
+        }
+    }
+}
+
 int right_change=0;
 int after_back_up=0;
 int min_right=2000;
 void parking_p()
 {
-    if(prev_right-right>100 || right-prev_right>100){
+    if(prev_right-right>150 || right-prev_right>150){
         right_change+=1;
-    }
+    }    
 
-    
-    if (millis() % 50 == 0){
-        Serial.print("right: ");
-        Serial.println(right);
-        Serial.print("change: ");
-        Serial.println(right_change);
-    }
     if(after_back_up==0){//후진 전
         if(right_change>=3){ //후진 후 주차
-            compute_steering = 0.8;
+            compute_steering = 1;
+            compute_speed = -0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(2000);
+            compute_steering = -1;
             compute_speed = -0.3;
             SetSteering(compute_steering);
             SetSpeed(compute_speed);
             delay(1000);
             after_back_up=1;
+            tone (SPEAKER_PIN, 330); 
+            delay ((int)(1000.0*0.75));
+
         }
         else{ //쭉 직진
-            line_tracing();
+            compute_steering = parallel_left(90);
+            compute_speed = 0.5;
+            // line_tracing();
         }   
     }
     else if(min_right==2000){ //후진 후
         if(prev_right<right && prev_right<150){// 평행 -> 후진
             min_right=prev_right;
-            compute_steering = -0.5;
-            compute_speed = 0.3;
+            //미니멈 찾고 멈추기 test
+            compute_steering = 0;
+            compute_speed = 0;
             SetSteering(compute_steering);
             SetSpeed(compute_speed);
-            delay(200);
+            delay(5000);
         }
         else{
-            compute_steering = -0.5;
+            compute_steering = -1;
             compute_speed = -0.3;
         }
     }
     else{ //min값 찾은 후 (평행)
-        if(center>150){
+        if(center>250){
             compute_steering = 0;
             compute_speed = 0;
             SetSteering(compute_steering);
@@ -297,11 +344,8 @@ void parking_p()
             delay(3000);
         }
         else{
-            compute_steering = 0;
+            compute_steering = parallel_right(min_right);
             compute_speed = -0.3;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(1000);
         }
     }
 }
@@ -463,6 +507,8 @@ void setup()
 
     pinMode(R_TRIG, OUTPUT);
     pinMode(R_ECHO, INPUT);
+
+    pinMode (SPEAKER_PIN, OUTPUT);
 
     max_pwm = max_ai_pwm;
     min_pwm = min_ai_pwm;
