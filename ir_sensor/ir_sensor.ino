@@ -9,8 +9,8 @@ void setup() {
 
 void loop() {
 
-    Serial.print("Right : "); Serial.print(analogRead(IR_R));
-     Serial.print("    Left : "); Serial.println(analogRead(IR_L));
-    delay(500);
+    Serial.print("Left : "); Serial.print(analogRead(IR_L));
+    Serial.print("\tRight : "); Serial.println(analogRead(IR_R));
+    delay(200);
     
 }

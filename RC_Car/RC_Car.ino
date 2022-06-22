@@ -70,11 +70,20 @@ bool flag2 = true;
 bool flag3 = true;
 
 // 정지선 검출
+int cnt_IR_BOTH = 0;
 bool stopLine = false;
+
+// R, L 방향 IR 센서가 연속으로 검출되는 경우
 int cnt_IR_R;
 int cnt_IR_L;
 
+int cnt_IR_max = 50; // back을 하는 max 검출 카운트
+
+unsigned long last_stop_line_time = 0;
+
+int obstacle_cnt = 0;
 bool obstacle_end = false;
+
 
 // 초음파 거리측정
 float GetDistance(int trig, int echo)
@@ -113,7 +122,7 @@ void SetSteering(float steering)
 // 뒷바퀴 모터회전
 void SetSpeed(float speed)
 {
-    speed = constrain(speed, -1, 1);
+    speed = constrain(speed, -1, 0.6);
 
     if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
         || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
@@ -253,13 +262,28 @@ void start()
     }
 }
 
-void parking_p()
+void parking_p1(){
+    compute_steering=0;
+    compute_speed=1;
+    if(right>side_detect && left<side_detect){
+      state+=1;
+      Serial.print("state: ");
+      Serial.println(state);
+    }
+//    SetSpeed(compute_speed);
+//    SetSteering(compute_steering);
+//    delay(1000);
+    
+}
+
+void parking_p2()
 {   
     if((ir_sensing(IR_R) > detect_ir) && (ir_sensing(IR_L) > detect_ir)){//전방에 라인 없을 때
-        if(right<side_detect && left<side_detect){//양쪽 초음파 검출 -> 직진
-            straight();
-        }
-        else if(right<170){ // 오른쪽 초음파 감지-> 왼쪽으로 회전
+//        if(right<side_detect && left<side_detect){//양쪽 초음파 검출 -> 직진
+//            straight();
+//        }
+//        else 
+        if(right<180){ // 오른쪽 초음파 감지-> 왼쪽으로 회전
             compute_speed=0.5;
             compute_steering=-1;
         }
@@ -269,28 +293,66 @@ void parking_p()
         }
     }
     else if(right<180){ //전방, 오른쪽 감지 -> 후진 후 정지
-        compute_steering=0.4;
+        compute_steering=0.3;
         compute_speed=-0.5;
         SetSpeed(compute_speed);
         SetSteering(compute_steering);
-        delay(1500);
+        delay(1200);
         compute_steering=0;
         compute_speed=0;
         SetSpeed(compute_speed);
         SetSteering(compute_steering);
         delay(3000);
+        state+=1;
+        Serial.print("state: ");
+        Serial.println(state);
     }
     else{ //전방에 라인 감지 -> 후진 후 왼쪽 회전
         compute_steering=1;
         compute_speed=-0.5;
         SetSpeed(compute_speed);
         SetSteering(compute_steering);
-        delay(500);
+        delay(600);
         compute_steering=0;
         compute_speed=0.5;
         SetSpeed(compute_speed);
         SetSteering(compute_steering);
-        delay(400);
+        delay(200);
+        compute_steering=0;
+        compute_speed=0;
+    }
+}
+
+void parking_p3()
+{   
+    if((ir_sensing(IR_R) > detect_ir) && (ir_sensing(IR_L) > detect_ir)){//전방에 라인 없을 때
+        if(right<side_detect && left<side_detect){//양쪽 초음파 검출 -> 직진
+            straight();
+        }
+        else if(right<200){//오른쪽 초음파 검출 -> 왼쪽 회전
+            compute_speed=0.5;
+            compute_steering=-1;
+        }
+        else { //오른쪽으로 회전
+            compute_speed=0.5;
+            compute_steering=0.5;
+        }
+    }
+    else if(ir_sensing(IR_R) > detect_ir){ //오른쪽에 라인 감지 -> 오른쪽으로 후진
+        compute_steering=1;
+        compute_speed=-0.5;
+        SetSpeed(compute_speed);
+        SetSteering(compute_steering);
+        delay(500);
+        compute_steering=0;
+        compute_speed=0;
+    }
+    else{ // 왼쪽으로 후진
+        compute_steering=-1;
+        compute_speed=-0.5;
+        SetSpeed(compute_speed);
+        SetSteering(compute_steering);
+        delay(500);
         compute_steering=0;
         compute_speed=0;
     }
@@ -330,16 +392,19 @@ void auto_driving(int state)
     case 0: // 출발
         start();
         break;
-    case 1: // 평행주차
-        parking_p();
+    case 1: // 평행주차        
+        parking_p1();
         break;
-    case 2: // T 주차
-            //            parking_t();
+    case 2:
+        parking_p2();
         break;
-    case 3: // 장애물 회피
+    case 3:
+        parking_p3();
+        break;
+    case 4: // 장애물 회피
         obstacle();
         break;
-    case 4: // 종료
+    case 5: // 종료
         _end();
         break;
     }
@@ -347,19 +412,24 @@ void auto_driving(int state)
 
 bool CheckStopLine()
 {
+    // 방금 전에 정지선을 지나 온 경우
+    if (state != 0 && millis() - last_stop_line_time < 5000)
+    {
+        return false;
+    }
+
     if (ir_sensing(IR_R) <= detect_ir && ir_sensing(IR_L) <= detect_ir)
     {
-        cnt_IR_R++;
-        cnt_IR_L++;
+        cnt_IR_BOTH += 1;
     }
     else
     {
-        cnt_IR_R = 0;
-        cnt_IR_L = 0;
+        cnt_IR_BOTH = 0;
     }
-
-    if (cnt_IR_R == cnt_IR_L && cnt_IR_R >= 5)
+    
+    if (cnt_IR_BOTH >= 3)
     {
+        last_stop_line_time = millis();
         return true;
     }
     return false;
@@ -395,14 +465,20 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
+    state = 0;
 }
 
 void loop()
 {
+    
     if (CheckStopLine())
     {
-        // delay(3000);
-        // state += 1;
+        
+        state += 1;
+        Serial.print("state: ");
+        Serial.println(state);
+//        delay(5000);
+        
     }
 
     compute_steering = cur_steering;
@@ -414,7 +490,7 @@ void loop()
     left = GetDistance(L_TRIG, L_ECHO);
     right = GetDistance(R_TRIG, R_ECHO);
 
-    auto_driving(1);
+    auto_driving(state);
 
     SetSpeed(compute_speed);
     SetSteering(compute_steering);
