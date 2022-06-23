@@ -389,7 +389,6 @@ void parking_p()
 }
 
 
-
 bool t_flag1 = false;
 bool t_flag2 = false;
 
@@ -423,7 +422,7 @@ void parking_t1()
         }
     }
     else{
-        compute_steering = parallel_right(95)*0.3;
+        compute_steering = parallel_right(95)*0.2;
         compute_speed = -0.1;
     }
 }
