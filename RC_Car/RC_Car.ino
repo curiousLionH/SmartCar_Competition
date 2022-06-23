@@ -74,6 +74,9 @@ int cnt_IR_R;
 int cnt_IR_L;
 int cnt_IR_max = 50; // back을 하는 max 검출 카운트
 
+bool t_flag1 = false;
+bool t_flag2 = false;
+
 int obstacle_cnt = 0;
 bool obstacle_end = false;
 
@@ -343,10 +346,23 @@ void parking_p()
 void parking_t1()
 {
     // 1. 좌회전
-    if (millis() - last_stop_line_time > 100 && millis() - last_stop_line_time < 400)
+    if (!t_flag1 && millis() - last_stop_line_time > 400)
     {
-        compute_steering = -1;
-        compute_speed = 0.1;
+        if (millis() - last_stop_line_time < 3500){
+            compute_steering = -0.8;
+            compute_speed = 0.1;
+        }
+        else{
+            compute_steering = parallel_right(90);
+            compute_speed = 0.1;
+            if (left > side_detect && right > side_detect){
+                t_flag1 = true;
+            }   
+        }
+    }
+    else if (t_flag1 && !t_flag2){
+        compute_steering = parallel_right(90);
+        compute_speed = -0.1;
     }
     else
     {
@@ -356,21 +372,6 @@ void parking_t1()
 
 void parking_t2()
 {
-    if (right > side_detect)
-    {
-        compute_steering = compute_steering + 0.1;
-        compute_speed = -0.5;
-    }
-    else
-    {
-        compute_steering = compute_steering - 0.1;
-        compute_speed = -0.5;
-    }
-}
-
-void parking_t3()
-{
-    // 3. 전진
     line_tracing();
 }
 
@@ -465,10 +466,7 @@ void auto_driving(int state)
     case 5: // T 주차 2
         parking_t2();
         break;
-    case 6: // T 주차 3
-        parking_t3();
-        break;
-    case 7: // 버스 피하기
+    case 6: // 버스 피하기
         obstacle();
         break;
     }
