@@ -476,6 +476,51 @@ void parking_t1()
     }
 }
 
+bool t_flag1 = false;
+bool t_flag2 = false;
+
+int turn_left = 0;
+int go_back = 0;
+void parking_t1()
+{
+    if (turn_left == 0)
+    {
+        if (center < 200)
+        {
+            compute_steering = -1;
+            compute_speed = 0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(1700);
+            turn_left = 1;
+        }
+        else
+        {
+            compute_steering = 0;
+            compute_speed = 0.5;
+        }
+    }
+    else if (go_back == 0)
+    {
+        if (left > side_detect && right > side_detect)
+        {
+            compute_steering = 0;
+            compute_speed = -0.5;
+            go_back = 1;
+        }
+        else
+        {
+            compute_steering = parallel_right(95);
+            compute_speed = 0.4;
+        }
+    }
+    else
+    {
+        compute_steering = parallel_right(95) * 0.2;
+        compute_speed = -0.1;
+    }
+}
+
 void parking_t2()
 {
     if (millis() - last_stop_line_time < 1000)
