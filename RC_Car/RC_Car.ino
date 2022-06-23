@@ -254,13 +254,13 @@ int parallel_left(int distance)
         return 0;
     }
     else { // 일단 전진 기준
-        int sign_speed = (compute_speed > 0) - (compute_speed < 0);
+        // int sign_speed = (compute_speed > 0) - (compute_speed < 0);
 
         if (left-distance > 10) { // 왼쪽으로 꺾기
-            return -1 * sign_speed;
+            return -1 ;
         }
         else if (left-distance < -10) { // 오른쪽으로 꺾기
-            return 1 * sign_speed;
+            return 1 ;
         }
         else {
             return 0;
@@ -270,17 +270,16 @@ int parallel_left(int distance)
 int parallel_right(int distance)
 {
     if (right > 150 || compute_speed == 0) {
-        // 오른쪽이 너무 멀리 있거나 정지 상태라면 판단할 수 없음 (== 평행)
         return 0;
     }
     else { // 일단 전진 기준
-        int sign_speed = (compute_speed > 0) - (compute_speed < 0);
+        // int sign_speed = (compute_speed > 0) - (compute_speed < 0);
 
         if (right-distance > 10) { // 오른쪽으로 꺾기
-            return 1 * sign_speed;
+            return 1*0.8;
         }
         else if (right-distance < -10) { // 왼쪽으로 꺾기
-            return -1 * sign_speed;
+            return -1*0.8;
         }
         else {
             return 0;
@@ -309,34 +308,25 @@ void parking_p()
             SetSteering(compute_steering);
             SetSpeed(compute_speed);
             delay(1000);
+            compute_steering = 0.7;
+            compute_speed = 0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(700);
+            compute_steering = 0;
+            compute_speed = -0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(50);
             after_back_up=1;
-            tone (SPEAKER_PIN, 330); 
-            delay ((int)(1000.0*0.75));
-
         }
         else{ //쭉 직진
             compute_steering = parallel_left(90);
             compute_speed = 0.5;
-            // line_tracing();
         }   
     }
-    else if(min_right==2000){ //후진 후
-        if(prev_right<right && prev_right<150){// 평행 -> 후진
-            min_right=prev_right;
-            //미니멈 찾고 멈추기 test
-            compute_steering = 0;
-            compute_speed = 0;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(5000);
-        }
-        else{
-            compute_steering = -1;
-            compute_speed = -0.3;
-        }
-    }
     else{ //min값 찾은 후 (평행)
-        if(center>250){
+        if(center>300){
             compute_steering = 0;
             compute_speed = 0;
             SetSteering(compute_steering);
@@ -344,8 +334,8 @@ void parking_p()
             delay(3000);
         }
         else{
-            compute_steering = parallel_right(min_right);
-            compute_speed = -0.3;
+            compute_steering = parallel_right(90);
+            compute_speed = -0.1;
         }
     }
 }
@@ -524,12 +514,12 @@ void loop()
     prev_left = left;
     prev_right = right;
 
-    compute_steering = cur_steering;
-    compute_speed = cur_speed;
-
     center = GetDistance(FC_TRIG, FC_ECHO);
     left = GetDistance(L_TRIG, L_ECHO);
     right = GetDistance(R_TRIG, R_ECHO);
+
+    compute_steering = cur_steering;
+    compute_speed = cur_speed;
 
     ir_r_value = ir_sensing(IR_R);
     ir_l_value = ir_sensing(IR_L);
