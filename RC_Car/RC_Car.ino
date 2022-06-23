@@ -72,7 +72,7 @@ unsigned long last_stop_line_time;
 // R, L 방향 IR 센서가 연속으로 검출되는 경우
 int cnt_IR_R;
 int cnt_IR_L;
-int cnt_IR_max = 50; // back을 하는 max 검출 카운트
+int cnt_IR_max = 30; // back을 하는 max 검출 카운트
 
 int obstacle_cnt = 0;
 bool obstacle_end = false;
@@ -374,12 +374,12 @@ void parking_p()
             SetSteering(compute_steering);
             SetSpeed(compute_speed);
             delay(500);
-            compute_steering = 0.2;
-            compute_speed = 0.5;
+            compute_steering = 0.3;
+            compute_speed = 0.3;
             after_finding_line=1;
         }
         else{
-            compute_steering = -0.;
+            compute_steering = -0.6;
             compute_speed = 0.5;
         }
     }
@@ -392,36 +392,52 @@ void parking_p()
 
 bool t_flag1 = false;
 bool t_flag2 = false;
+
+int turn_left=0;
+int go_back=0;
 void parking_t1()
 {
-    // 1. 좌회전
-    if (!t_flag1 && millis() - last_stop_line_time > 400)
-    {
-        if (millis() - last_stop_line_time < 3500){
-            compute_steering = -0.8;
-            compute_speed = 0.1;
+    if(turn_left==0){
+        if(center<200){
+            compute_steering = -1;
+            compute_speed = 0.3;
+            SetSteering(compute_steering);
+            SetSpeed(compute_speed);
+            delay(1700);
+            turn_left=1;
         }
         else{
-            compute_steering = parallel_right(90);
-            compute_speed = 0.1;
-            if (left > side_detect && right > side_detect){
-                t_flag1 = true;
-            }   
+            compute_steering = 0;
+            compute_speed = 0.5;
         }
     }
-    else if (t_flag1 && !t_flag2){
-        compute_steering = parallel_right(90);
-        compute_speed = -0.1;
+    else if(go_back==0){
+        if(left>side_detect && right>side_detect){
+            compute_steering = 0;
+            compute_speed = -0.5;
+            go_back=1;
+        }
+        else{
+            compute_steering = parallel_right(95);
+            compute_speed = 0.4;
+        }
     }
-    else
-    {
-        line_tracing();
+    else{
+        compute_steering = parallel_right(95)*0.3;
+        compute_speed = -0.1;
     }
 }
 
 void parking_t2()
 {
-    line_tracing();
+    if (millis() - last_stop_line_time < 1000){
+        compute_speed = 0;
+        compute_steering = 0;
+    }
+    else{
+        compute_steering = parallel_right(95);
+        compute_speed = 0.5;
+    }
 }
 
 void obstacle()
@@ -566,7 +582,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 0;
+    state = 4;
 }
 
 void loop()
