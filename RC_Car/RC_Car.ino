@@ -190,59 +190,65 @@ void SetSpeed(float speed)
 
 void line_tracing()
 { // 기본주행
-    // // 후진은 위험한 상황이니까 전진보다 먼저 고려
-    // if (cnt_IR_R > cnt_IR_max)
-    // {
-    //     // 후진
-    //     while (ir_r_value <= detect_ir)
-    //     {
-    //         SetSteering(0.6);
-    //         SetSpeed(-0.5);
-    //     }
-    //     cnt_IR_R = 0;
-    // }
-    // else if (cnt_IR_L > cnt_IR_max)
-    // {
-    //     // 후진
-    //     while (ir_l_value <= detect_ir)
-    //     {
-    //         SetSteering(-0.6);
-    //         SetSpeed(-0.5);
-    //     }
-    //     cnt_IR_L = 0;
-    // }
-    // else if (ir_r_value <= detect_ir)
-    // { // 오른쪽 차선이 검출된 경우
-    //     compute_steering = -1;
-    //     compute_speed = 0.3;
-    //     cnt_IR_R++;
-    // }
-    // else if (ir_l_value <= detect_ir)
-    // { //왼쪽 차선이 검출된 경우
-    //     compute_steering = 1;
-    //     compute_speed = 0.3;
-    //     cnt_IR_L++;
-    // }
-    // else if (ir_r_value >= detect_ir && ir_l_value >= detect_ir)
-    // { //차선이 검출되지 않을 경우 직진
-    //     compute_steering = 0;
-    //     compute_speed = 1;
-    //     cnt_IR_R = 0;
-    //     cnt_IR_L = 0;
-    // }
-
-    if (ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir ) {  //차선이 검출되지 않을 경우 직진
+    // 후진은 위험한 상황이니까 전진보다 먼저 고려
+    if (cnt_IR_R > cnt_IR_max)
+    {
+        // 후진
+        while (ir_sensing(IR_R) <= detect_ir)
+        {
+            SetSteering(0.6);
+            SetSpeed(-0.5);
+        }
+        cnt_IR_R = 0;
+    }
+    else if (cnt_IR_L > cnt_IR_max)
+    {
+        // 후진
+        while (ir_sensing(IR_L) <= detect_ir)
+        {
+            SetSteering(-0.6);
+            SetSpeed(-0.5);
+        }
+        cnt_IR_L = 0;
+    }
+    else if (ir_r_value <= detect_ir)
+    { // 오른쪽 차선이 검출된 경우
+        compute_steering = -1;
+        compute_speed = 0.3;
+        cnt_IR_L=0;
+        cnt_IR_R++;
+    }
+    else if (ir_l_value <= detect_ir)
+    { //왼쪽 차선이 검출된 경우
+        compute_steering = 1;
+        compute_speed = 0.3;
+        cnt_IR_R=0;
+        cnt_IR_L++;
+    }
+    else if (ir_r_value >= detect_ir && ir_l_value >= detect_ir)
+    { //차선이 검출되지 않을 경우 직진
         compute_steering = 0;
         compute_speed = 1;
+        cnt_IR_R = 0;
+        cnt_IR_L = 0;
     }
-    else if (ir_sensing(IR_R) <= detect_ir) { // 오른쪽 차선이 검출된 경우
-        compute_steering = -1;
-        compute_speed = 0.1;
+    else{
+        compute_steering = 0;
+        compute_speed = 0;
     }
-    else if (ir_sensing(IR_L) <= detect_ir) { //왼쪽 차선이 검출된 경우
-        compute_steering = 1;
-        compute_speed = 0.1;
-    }
+
+    // if (ir_sensing(IR_R) >= detect_ir && ir_sensing(IR_L) >= detect_ir ) {  //차선이 검출되지 않을 경우 직진
+    //     compute_steering = 0;
+    //     compute_speed = 1;
+    // }
+    // else if (ir_sensing(IR_R) <= detect_ir) { // 오른쪽 차선이 검출된 경우
+    //     compute_steering = -1;
+    //     compute_speed = 0.1;
+    // }
+    // else if (ir_sensing(IR_L) <= detect_ir) { //왼쪽 차선이 검출된 경우
+    //     compute_steering = 1;
+    //     compute_speed = 0.1;
+    // }
 }
 
 void _start()
@@ -257,7 +263,7 @@ void _start()
     }
 }
 
-float parallel_left(int distance)
+int parallel_left(int distance)
 {
     if (left > 150 || compute_speed == 0) {
         // 오른쪽이 너무 멀리 있거나 정지 상태라면 판단할 수 없음 (== 평행)
@@ -277,7 +283,7 @@ float parallel_left(int distance)
         }
     }
 }
-float parallel_right(int distance)
+int parallel_right(int distance)
 {
     if (right > 150 || compute_speed == 0) {
         return 0;
@@ -357,7 +363,7 @@ void parking_p()
             after_parking=1;
         }
         else{ 
-            compute_steering = 0;
+            compute_steering = parallel_right(90)*0.6;
             compute_speed = -0.1;
         }
     }
@@ -382,13 +388,30 @@ void parking_p()
     }
 }
 
+
+
+bool t_flag1 = false;
+bool t_flag2 = false;
 void parking_t1()
 {
     // 1. 좌회전
-    if (millis() - last_stop_line_time > 100 && millis() - last_stop_line_time < 400)
+    if (!t_flag1 && millis() - last_stop_line_time > 400)
     {
-        compute_steering = -1;
-        compute_speed = 0.1;
+        if (millis() - last_stop_line_time < 3500){
+            compute_steering = -0.8;
+            compute_speed = 0.1;
+        }
+        else{
+            compute_steering = parallel_right(90);
+            compute_speed = 0.1;
+            if (left > side_detect && right > side_detect){
+                t_flag1 = true;
+            }   
+        }
+    }
+    else if (t_flag1 && !t_flag2){
+        compute_steering = parallel_right(90);
+        compute_speed = -0.1;
     }
     else
     {
@@ -398,21 +421,6 @@ void parking_t1()
 
 void parking_t2()
 {
-    if (right > side_detect)
-    {
-        compute_steering = compute_steering + 0.1;
-        compute_speed = -0.5;
-    }
-    else
-    {
-        compute_steering = compute_steering - 0.1;
-        compute_speed = -0.5;
-    }
-}
-
-void parking_t3()
-{
-    // 3. 전진
     line_tracing();
 }
 
@@ -521,10 +529,7 @@ void auto_driving(int state)
     case 5: // T 주차 2
         parking_t2();
         break;
-    case 6: // T 주차 3
-        parking_t3();
-        break;
-    case 7: // 버스 피하기
+    case 6: // 버스 피하기
         obstacle();
         break;
     }
