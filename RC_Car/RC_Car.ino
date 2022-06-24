@@ -338,11 +338,13 @@ int parallel_right(int distance)
 
 unsigned long right_change_time = 0;
 
+bool parking_p_time_checker = false;
+unsigned long macro_start_time;
+
 int right_change = 0;
-int after_back_up = 0;
-int after_finding_min = 0;
-int after_parking = 0;
-int after_finding_line = 0;
+bool after_back_up = false;
+bool after_parking = false;
+bool after_finding_line = false;
 
 int min_distance = 2000;
 void parking_p()
@@ -353,35 +355,43 @@ void parking_p()
         right_change += 1;
         right_change_time = millis();
     }
-    // if(prev_right-right>150 || right-prev_right>150){
-    //     right_change+=1;
-    // }
 
-    if (after_back_up == 0)
+    if (!after_back_up)
     { //후진 전
         if (right_change >= 3)
         { //후진, 위치잡기
-            compute_steering = 1;
-            compute_speed = -0.4;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(2000);
-            compute_steering = -1;
-            compute_speed = -0.4;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(1000);
-            compute_steering = 0.7;
-            compute_speed = 0.3;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(700);
-            compute_steering = 0;
-            compute_speed = -0.3;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(50);
-            after_back_up = 1;
+            if (!parking_p_time_checker)
+            { // 첫 진입시 시간 체크
+                parking_p_time_checker = true;
+                macro_start_time = millis();
+            }
+
+            // delay 제거하고 millis() 로 대체
+            if (millis() - macro_start_time < 2000)
+            {
+                compute_steering = 1;
+                compute_speed = -0.4;
+            }
+            else if (millis() - macro_start_time < 3000)
+            {
+                compute_steering = -1;
+                compute_speed = -0.4;
+            }
+            else if (millis() - macro_start_time < 3700)
+            {
+                compute_steering = 0.7;
+                compute_speed = 0.3;
+            }
+            else if (millis() - macro_start_time < 3750)
+            {
+                compute_steering = 0;
+                compute_speed = -0.3;
+            }
+            else
+            { // 시간 다 지나면 그만하기
+                after_back_up = true;
+                parking_p_time_checker = false;
+            }
         }
         else
         { //쭉 직진
@@ -389,16 +399,26 @@ void parking_p()
             compute_speed = 0.5;
         }
     }
-    else if (after_parking == 0)
+    else if (!after_parking)
     { //후진 후 주차
         if (center > 300)
         {
-            compute_steering = 0;
-            compute_speed = 0;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(2000);
-            after_parking = 1;
+            if (!parking_p_time_checker)
+            {
+                macro_start_time = millis();
+                parking_p_time_checker = true;
+            }
+
+            if (millis() - macro_start_time < 2000)
+            {
+                compute_steering = 0;
+                compute_speed = 0;
+            }
+            else
+            {
+                after_parking = true;
+                parking_p_time_checker = false;
+            }
         }
         else
         {
@@ -406,18 +426,27 @@ void parking_p()
             compute_speed = -0.1;
         }
     }
-    else if (after_finding_line == 0)
+    else if (!after_finding_line)
     { //주차 후
         if (ir_l_value <= detect_ir)
         {
-            compute_steering = -1;
-            compute_speed = -0.5;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(500);
-            compute_steering = 0.3;
-            compute_speed = 0.3;
-            after_finding_line = 1;
+            if (!parking_p_time_checker)
+            {
+                macro_start_time = millis();
+                parking_p_time_checker = true;
+            }
+
+            if (millis() - macro_start_time < 500)
+            {
+                compute_steering = -1;
+                compute_speed = -0.5;
+            }
+            else
+            {
+                compute_steering = 0.3;
+                compute_speed = 0.3;
+                after_finding_line = true;
+            }
         }
         else
         {
@@ -428,51 +457,6 @@ void parking_p()
     else
     {
         line_tracing();
-    }
-}
-
-bool t_flag1 = false;
-bool t_flag2 = false;
-
-int turn_left = 0;
-int go_back = 0;
-void parking_t1()
-{
-    if (turn_left == 0)
-    {
-        if (center < 200)
-        {
-            compute_steering = -1;
-            compute_speed = 0.3;
-            SetSteering(compute_steering);
-            SetSpeed(compute_speed);
-            delay(1700);
-            turn_left = 1;
-        }
-        else
-        {
-            compute_steering = 0;
-            compute_speed = 0.5;
-        }
-    }
-    else if (go_back == 0)
-    {
-        if (left > side_detect && right > side_detect)
-        {
-            compute_steering = 0;
-            compute_speed = -0.5;
-            go_back = 1;
-        }
-        else
-        {
-            compute_steering = parallel_right(95);
-            compute_speed = 0.4;
-        }
-    }
-    else
-    {
-        compute_steering = parallel_right(95) * 0.2;
-        compute_speed = -0.1;
     }
 }
 
@@ -653,7 +637,7 @@ void road_201()
         melody_t = millis();
         melody_index++;
     }
-    melody_index = melody_index % 96
+    melody_index = melody_index % 96;
 }
 
 void setup()
@@ -687,7 +671,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 4;
+    state = 0;
 }
 
 void loop()
