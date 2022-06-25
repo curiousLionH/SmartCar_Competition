@@ -100,6 +100,41 @@ int melody_road_201[] = {
     NOTE_G5, 0, 0, NOTE_C6, 0, 0, NOTE_B5, 0,
     NOTE_A5, NOTE_G5, NOTE_E5, NOTE_C5, NOTE_G4, NOTE_D5, NOTE_C5, 0};
 
+int melody_we_are_all_friends[] = {     // 길이 264
+    NOTE_E5, NOTE_G5, NOTE_G5, NOTE_G5, 0, NOTE_E5, NOTE_G5, 0,
+    NOTE_E5, NOTE_G5, NOTE_G5, NOTE_G5, 0, NOTE_A5, NOTE_G5, 0,
+    NOTE_C6, NOTE_C6, NOTE_C6, 0, NOTE_C6, NOTE_C6, NOTE_C6, 0,
+    NOTE_C6, NOTE_A5, NOTE_A5, NOTE_A5, 0, NOTE_G5, NOTE_A5, 0,
+    NOTE_F5, NOTE_F5, NOTE_G5, NOTE_G5, NOTE_A5, NOTE_A5, NOTE_B5, NOTE_B5,
+    NOTE_C6, NOTE_GS5, 0, NOTE_GS5, 0, 0, 0, 0,
+    NOTE_E6, NOTE_E6, NOTE_E6, NOTE_E6, 0, NOTE_C6, NOTE_E6, 0,
+    NOTE_D6, 0, 0, 0, 0, 0, 0, 0,
+    NOTE_G5, NOTE_G5, NOTE_G5, NOTE_G5, 0, NOTE_E5, NOTE_G5, 0,
+    NOTE_G5, NOTE_G5, NOTE_G5, NOTE_G5, 0, NOTE_A5, NOTE_G5, 0,
+    NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6,
+    NOTE_C6, NOTE_A5, NOTE_A5, NOTE_A5, 0, NOTE_G5, NOTE_A5, 0,
+    NOTE_C6, NOTE_C6, NOTE_D6, NOTE_D6, NOTE_E6, NOTE_E6, NOTE_F6, NOTE_G6,
+    0, NOTE_G6, NOTE_G6, NOTE_G6, NOTE_G6, NOTE_F6, 0, 0,
+    NOTE_E6, NOTE_E6, NOTE_E6, NOTE_E6, 0, NOTE_D6, NOTE_C6, 0,
+    NOTE_D6, 0, 0, 0, 0, 0, 0, 0,
+    NOTE_A5, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, 0, NOTE_C6, NOTE_B5,
+    0, NOTE_C6, NOTE_D6, NOTE_D6, NOTE_D6, NOTE_B5, 0, 0,
+    NOTE_B5, NOTE_A5, NOTE_B5, NOTE_A5, NOTE_B5, NOTE_C6, NOTE_D6, NOTE_C6,
+    0, 0, NOTE_B5, 0, NOTE_A5, 0, 0, 0,
+    NOTE_A5, NOTE_B5, NOTE_C6, NOTE_C6, 0, 0, 0, 0,
+    NOTE_B5, NOTE_C6, NOTE_D6, NOTE_D6, 0, 0, 0, 0,
+    NOTE_B5, NOTE_C6, NOTE_D6, NOTE_C6, NOTE_D6, NOTE_E6, 0, 0,
+    NOTE_E6, 0, NOTE_F6, 0, NOTE_E6, 0, NOTE_D6, NOTE_D6,
+    0, NOTE_C6, 0, 0, 0, 0, 0, 0,
+    NOTE_A5, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, 0,
+    NOTE_G5, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, 0,
+    NOTE_E6, NOTE_E6, NOTE_E6, NOTE_F6, NOTE_G6, NOTE_A6, NOTE_G6, NOTE_F6,
+    NOTE_E6, 0, NOTE_C6, 0, NOTE_D6, 0, 0, 0,
+    NOTE_A5, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, 0,
+    NOTE_G5, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, NOTE_B5, NOTE_C6, 0,
+    NOTE_E6, NOTE_E6, NOTE_F6, NOTE_G6, NOTE_D6, NOTE_C6, NOTE_B5, 0,
+    NOTE_C6, 0, 0, 0, 0, 0, 0, 0};
+
 // 초음파 거리측정
 float GetDistance(int trig, int echo)
 {
@@ -870,6 +905,17 @@ void auto_driving(int state)
     }
 }
 
+void we_are_all_friends()
+{
+    if (millis() - melody_t > 300)
+    {
+        tone(SPEAKER_PIN, melody_we_are_all_friends[melody_index], 250);
+        melody_t = millis();
+        melody_index++;
+    }
+    melody_index = melody_index % 264;
+}
+
 void road_201()
 {
     if (millis() - melody_t > 300)
@@ -930,7 +976,8 @@ void loop()
     }
     i++;
 
-    road_201();
+//    road_201();
+    we_are_all_friends();
     
 
 
