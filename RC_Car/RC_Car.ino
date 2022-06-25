@@ -51,7 +51,7 @@ int min_ai_pwm = 70;  // 자율주행 모터 최소 출력 (0 ~ 255)
 int angle_offset = -5; // 서보 모터 중앙각 오프셋 (단위: 도)
 int angle_limit = 55;  // 서보 모터 회전 제한 각 (단위: 도)
 
-int center_detect = 200; // 전방 감지 거리 (단위: mm)
+int center_detect = 180; // 전방 감지 거리 (단위: mm)
 int center_start = 160;  // 전방 출발 거리 (단위: mm)
 int center_stop = 70;    // 전방 멈춤 거리 (단위: mm)
 
@@ -375,7 +375,7 @@ void SetSpeed(float speed)
     cur_speed = speed;
 }
 
-void line_tracing(float speed=1, float turn_speed=0.3, float right_steering=0.6, float left_steering=-0.6, int cnt_IR_max=20)
+void line_tracing(float speed=0.8, float turn_speed=0.2, float right_steering=0.9, float left_steering=-0.9, int cnt_IR_max=60)
 { // 기본주행
     // 후진은 위험한 상황이니까 전진보다 먼저 고려
     if (cnt_IR_R > cnt_IR_max)
@@ -721,8 +721,8 @@ void parking_t1()
 {   
     // 1. 좌회전
     if (millis()-last_stop_line_time <= 600){
-        compute_steering = 0.4;
-        compute_speed = 0.15;
+        compute_steering = 0.3;
+        compute_speed = 0.1;
     }
     else if (!t_flag2 && millis()-last_stop_line_time > 600)
     {
@@ -733,13 +733,13 @@ void parking_t1()
             compute_steering = -0.9;
             compute_speed = 0.05;
             if (millis()-last_stop_line_time > 2000 && (ir_r_value <= detect_ir || center < 150)){
-                line_tracing(1, 0.07, 0.6, -1, 40);
+                line_tracing(0.3, 0.1, 1, -1, 40);
                 compute_speed = 0.05 * ((compute_speed> 0) - (compute_speed < 0));
                 t_flag1 = true;
             }           
         }
         else{
-            line_tracing(1, 0.07, 0.6, -1, 40);
+            line_tracing(0.3, 0.1, 1, -1, 40);
             compute_speed = 0.07 * ((compute_speed> 0) - (compute_speed < 0));
             if (left > 1000 && right > 1000 && wall_yes){
                 t_flag3 = true;
@@ -750,12 +750,12 @@ void parking_t1()
         }
     }
     else if (t_flag3){
-        compute_steering = 0.2 * parallel_right(90);
+        compute_steering = 0.15 * parallel_right(90);
         compute_speed = -0.2;
     }
     else
     {
-        line_tracing(1, 0.07, 0.6, -1, 40);
+        line_tracing(0.3, 0.07, 0.6, -1, 40);
         compute_speed = 0.05 * ((compute_speed> 0) - (compute_speed < 0));
         
     }
@@ -773,7 +773,7 @@ void parking_t2()
     else if (millis() - last_stop_line_time < 2000)
     {
         compute_speed = 0.5;
-        compute_steering = parallel_right(90);
+        compute_steering = 0.2*parallel_right(100);
     }
     else {
         line_tracing(1, 0.5, 0.6, -0.6, 40);
@@ -958,13 +958,13 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 0;
+    state = 3;
 }
 
 int i=0;
 void loop()
 {   
-    if (i%3==0){
+    if (i%10==0){
         prev_center = center;
         prev_left = left;
         prev_right = right;
@@ -977,7 +977,7 @@ void loop()
     i++;
 
 //    road_201();
-    we_are_all_friends();
+//    we_are_all_friends();
     
 
 
