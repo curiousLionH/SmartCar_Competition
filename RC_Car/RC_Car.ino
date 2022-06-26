@@ -766,97 +766,57 @@ void parking_p()
     }
 }
 
-int left_change = 0;
-unsigned long left_change_time = 0;
-bool flag_L = false;
-bool flag_R = false;
-bool t_flag1 = false;
-
-void parking_t1()
+int turn_left = 0;
+int turn_left2 = 0;
+int go_back = 0;
+void parking_t1()  
 {
-    // 1. 좌회전
-    if (millis() - last_stop_line_time <= 5000 && center > center_detect)
+    if (turn_left == 0)
     {
-        compute_steering = 0.25;
-        compute_speed = 0.12;
-    }
-    else
-    {
-        if (!t_flag1)
+        if (center < 200)
         {
-            compute_steering = -0.9;
-            compute_speed = 0.07;
-            if (millis() - last_stop_line_time > 2000 && (ir_r_value <= detect_ir || ir_l_value <= detect_ir || center < 100))
-            {
-                if (ir_r_value <= detect_ir){
-                    cnt_IR_R = 41;
-                    flag_R = true;
-                }else if (center < 100){
-                    flag_R = true;
-                }
-                
-                line_tracing(0.3, 0.1, 1, -1, 40);
-                compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
-                t_flag1 = true;
-            }
+            compute_steering = -1;
+            compute_speed = 0.2;
+            if(ir_r_value <= detect_ir){
+                turn_left = 1;
+            }            
         }
         else
         {
-            line_tracing(0.3, 0.1, 1, -1, 40);
-            compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
+            compute_steering = 0;
+            compute_speed = 0.2;
         }
     }
-}
-
-
-void parking_t2(){
-    if ((millis() - last_stop_line_time) < 1500){
-        if (flag_R){
-            compute_steering = 0.3;
+    else if(turn_left2==0){
+        //linetracing parameter 값 수정해야함
+        line_tracing(0.1, 0.1,  0.8, -0.8, 10);
+        if(left<side_detect && right<side_detect){
+            turn_left2=1;
         }
-        else{
-            compute_steering = -0.3;
-        }
-        compute_speed = -0.3;
-    }
-    else{
-        line_tracing(0.3, 0.1, 1, -1, 50);
-    }
-}
-
-
-void parking_t3(){ 
-    if (abs(prev_left - left) > 150 && millis() - left_change_time > 100)
-    {
-        left_change++;
-        left_change_time = millis();
-    }
-
-    if (left_change >= 3 && millis() - left_change_time > 2000)
-    {   
-        state++;
     }
     else
     {
-        compute_steering = 0.15 * parallel_right(90);
-        compute_speed = -0.25;
+        compute_steering = parallel_right(95);
+        compute_speed = 0.3;
     }
 }
 
-void parking_t4()
+void parking_t2(){
+    compute_steering = parallel_right(95) * 0.2;
+    compute_speed = -0.2;
+}
+
+void parking_t3()
 {
     if (millis() - last_stop_line_time < 1000)
     {
         compute_speed = 0;
         compute_steering = 0;
     }
-    else if (millis() - last_stop_line_time < 2000)
+    else
     {
+        compute_steering = parallel_right(95);
         compute_speed = 0.5;
-        compute_steering = 0.2*parallel_right(100);
-    }
-    else {
-        line_tracing(1, 0.5, 0.6, -0.6, 50);
     }
 }
 
@@ -958,16 +918,16 @@ void auto_driving(int state)
     case 6: // T 주차 3
         parking_t3();
         break;
-    case 7: // T 주차 4
-        parking_t4();
+    // case 7: // T 주차 4
+    //     parking_t4();
+    //     break;
+    case 7: // 버스 피하기
+        obstacle();
         break;
     case 8: // 버스 피하기
         obstacle();
         break;
     case 9: // 버스 피하기
-        obstacle();
-        break;
-    case 10: // 버스 피하기
         obstacle();
         break;
     }
@@ -1037,7 +997,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 0;
+    state = 2;
 }
 
 int i=0;
