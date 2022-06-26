@@ -73,16 +73,6 @@ unsigned long last_stop_line_time=0;
 // R, L 방향 IR 센서가 연속으로 검출되는 경우
 int cnt_IR_R;
 int cnt_IR_L;
-// int cnt_IR_max = 20; // back을 하는 max 검출 카운트
-
-bool t_flag1 = false;
-bool t_flag2 = false;
-bool t_flag3 = false;
-bool wall_yes = false;
-bool wall_no = false;
-
-int obstacle_cnt = 0;
-bool obstacle_end = false;
 
 // 노래
 unsigned long melody_t = 0;
@@ -591,11 +581,11 @@ int parallel_left(int distance)
     { // 일단 전진 기준
         // int sign_speed = (compute_speed > 0) - (compute_speed < 0);
 
-        if (left - distance > 10)
+        if (left - distance > 5)
         { // 왼쪽으로 꺾기
             return -1;
         }
-        else if (left - distance < -10)
+        else if (left - distance < -5)
         { // 오른쪽으로 꺾기
             return 1;
         }
@@ -616,11 +606,11 @@ int parallel_right(int distance)
     { // 일단 전진 기준
         // int sign_speed = (compute_speed > 0) - (compute_speed < 0);
 
-        if (right - distance > 10)
+        if (right - distance > 5)
         { // 오른쪽으로 꺾기
             return 1;
         }
-        else if (right - distance < -10)
+        else if (right - distance < -5)
         { // 왼쪽으로 꺾기
             return -1;
         }
@@ -780,6 +770,7 @@ int left_change = 0;
 unsigned long left_change_time = 0;
 bool flag_L = false;
 bool flag_R = false;
+bool t_flag1 = false;
 
 void parking_t1()
 {
@@ -789,7 +780,7 @@ void parking_t1()
         compute_steering = 0.25;
         compute_speed = 0.12;
     }
-    else if (!t_flag2)
+    else
     {
         if (!t_flag1)
         {
@@ -814,12 +805,6 @@ void parking_t1()
             line_tracing(0.3, 0.1, 1, -1, 40);
             compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
         }
-    }
-
-    else
-    {
-        line_tracing(0.3, 0.07, 1, -1, 40);
-        compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
     }
 }
 
@@ -869,6 +854,9 @@ void parking_t4()
         line_tracing(1, 0.5, 0.6, -0.6, 50);
     }
 }
+
+
+int obstacle_cnt = 0;
 
 void obstacle()
 {   
@@ -1044,7 +1032,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 0;
+    state = 3;
 }
 
 int i=0;
