@@ -68,7 +68,7 @@ float min_pwm;
 // 미션용 변수 =============================================================================
 // 정지선 검출
 int cnt_IR_BOTH;
-unsigned long last_stop_line_time=0;
+unsigned long last_stop_line_time = 0;
 
 // R, L 방향 IR 센서가 연속으로 검출되는 경우
 int cnt_IR_R;
@@ -92,7 +92,7 @@ int melody_road_201[] = {
     NOTE_G5, 0, 0, NOTE_C6, 0, 0, NOTE_B5, 0,
     NOTE_A5, NOTE_G5, NOTE_E5, NOTE_C5, NOTE_G4, NOTE_D5, NOTE_C5, 0};
 
-int melody_we_are_all_friends[] = {     // 길이 264
+int melody_we_are_all_friends[] = { // 길이 264
     NOTE_E5, NOTE_G5, NOTE_G5, NOTE_G5, 0, NOTE_E5, NOTE_G5, 0,
     NOTE_E5, NOTE_G5, NOTE_G5, NOTE_G5, 0, NOTE_A5, NOTE_G5, 0,
     NOTE_C6, NOTE_C6, NOTE_C6, 0, NOTE_C6, NOTE_C6, NOTE_C6, 0,
@@ -127,13 +127,56 @@ int melody_we_are_all_friends[] = {     // 길이 264
     NOTE_E6, NOTE_E6, NOTE_F6, NOTE_G6, NOTE_D6, NOTE_C6, NOTE_B5, 0,
     NOTE_C6, 0, 0, 0, 0, 0, 0, 0};
 
-int melody_parking[] = {    // 48
-    NOTE_E7, NOTE_DS7, NOTE_E7, NOTE_DS7, NOTE_E7, NOTE_B6, NOTE_D7, NOTE_C6,
-    NOTE_A6, 0, 0, NOTE_C6, NOTE_E6, NOTE_A6, NOTE_B6, 0,
-    0, NOTE_E6, NOTE_GS6, NOTE_B6, NOTE_C7, 0, 0, NOTE_E6,
-    NOTE_E7, NOTE_DS7, NOTE_E7, NOTE_DS7, NOTE_E7, NOTE_B6, NOTE_D7, NOTE_C6,
-    NOTE_A6, 0, 0, NOTE_C6, NOTE_E6, NOTE_A6, NOTE_B6, 0,
-    0, NOTE_E6, NOTE_C7, NOTE_B6, NOTE_A6, 0, 0, 0,
+int melody_parking[] = {
+    // 48
+    NOTE_E7,
+    NOTE_DS7,
+    NOTE_E7,
+    NOTE_DS7,
+    NOTE_E7,
+    NOTE_B6,
+    NOTE_D7,
+    NOTE_C6,
+    NOTE_A6,
+    0,
+    0,
+    NOTE_C6,
+    NOTE_E6,
+    NOTE_A6,
+    NOTE_B6,
+    0,
+    0,
+    NOTE_E6,
+    NOTE_GS6,
+    NOTE_B6,
+    NOTE_C7,
+    0,
+    0,
+    NOTE_E6,
+    NOTE_E7,
+    NOTE_DS7,
+    NOTE_E7,
+    NOTE_DS7,
+    NOTE_E7,
+    NOTE_B6,
+    NOTE_D7,
+    NOTE_C6,
+    NOTE_A6,
+    0,
+    0,
+    NOTE_C6,
+    NOTE_E6,
+    NOTE_A6,
+    NOTE_B6,
+    0,
+    0,
+    NOTE_E6,
+    NOTE_C7,
+    NOTE_B6,
+    NOTE_A6,
+    0,
+    0,
+    0,
 };
 
 // 초음파 거리측정
@@ -247,29 +290,37 @@ void SetSteering(float steering)
 //     cur_speed = speed;
 // }
 
+bool is_stop_time = false;
+unsigned long stop_time_time = 0;
+
+bool is_punch_time = false;
+unsigned long punch_time_time = 0;
+
 void SetSpeed(float speed, bool back = false)
 {
-    speed = constrain(speed, -1, 1);
 
-    if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
-        || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
+    if (is_stop_time)
     {
-        cur_speed = 0;
-        digitalWrite(M1_PWM, HIGH);
-        digitalWrite(M1_DIR1, LOW);
-        digitalWrite(M1_DIR2, LOW);
+        if (millis() - stop_time_time < stop_time)
+        {
 
-        digitalWrite(M2_PWM, HIGH);
-        digitalWrite(M2_DIR1, LOW);
-        digitalWrite(M2_DIR2, LOW);
+            cur_speed = 0;
+            digitalWrite(M1_PWM, HIGH);
+            digitalWrite(M1_DIR1, LOW);
+            digitalWrite(M1_DIR2, LOW);
 
-        if (stop_time > 0)
-            delay(stop_time);
+            digitalWrite(M2_PWM, HIGH);
+            digitalWrite(M2_DIR1, LOW);
+            digitalWrite(M2_DIR2, LOW);
+        }
+        else
+        {
+            is_stop_time = false;
+        }
     }
-
-    if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
+    else if (is_punch_time)
     {
-        if (punch_time > 0)
+        if (millis() - punch_time_time < punch_time)
         {
             if (speed > 0)
             {
@@ -291,71 +342,96 @@ void SetSpeed(float speed, bool back = false)
                 digitalWrite(M2_DIR1, LOW);
                 digitalWrite(M2_DIR2, HIGH);
             }
-            delay(punch_time);
         }
-    }
-
-    if (speed != 0) // 명령이 정지가 아니라면
-    {
-        int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
-
-        if (speed > 0)
-        {
-            analogWrite(M1_PWM, pwm);
-            digitalWrite(M1_DIR1, HIGH);
-            digitalWrite(M1_DIR2, LOW);
-
-            analogWrite(M2_PWM, pwm);
-            digitalWrite(M2_DIR1, HIGH);
-            digitalWrite(M2_DIR2, LOW);
-        }
-
-        else if (speed < 0 && !back)
-        {
-            analogWrite(M1_PWM, pwm);
-            digitalWrite(M1_DIR1, LOW);
-            digitalWrite(M1_DIR2, HIGH);
-
-            analogWrite(M2_PWM, pwm);
-            digitalWrite(M2_DIR1, LOW);
-            digitalWrite(M2_DIR2, HIGH);
-        }
-
         else
         {
-            if (compute_steering > 0)
-            {
-                analogWrite(M1_PWM, pwm);
-                digitalWrite(M1_DIR1, LOW);
-                digitalWrite(M1_DIR2, HIGH);
-
-                analogWrite(M2_PWM, pwm * 0.6);
-                digitalWrite(M2_DIR1, LOW);
-                digitalWrite(M2_DIR2, HIGH);
-            }
-            else if (compute_steering < 0)
-            {
-                analogWrite(M1_PWM, pwm * 0.6);
-                digitalWrite(M1_DIR1, LOW);
-                digitalWrite(M1_DIR2, HIGH);
-
-                analogWrite(M2_PWM, pwm);
-                digitalWrite(M2_DIR1, LOW);
-                digitalWrite(M2_DIR2, HIGH);
-            }
-            else
-            {
-                analogWrite(M1_PWM, pwm);
-                digitalWrite(M1_DIR1, LOW);
-                digitalWrite(M1_DIR2, HIGH);
-
-                analogWrite(M2_PWM, pwm);
-                digitalWrite(M2_DIR1, LOW);
-                digitalWrite(M2_DIR2, HIGH);
-            }
+            is_punch_time = false;
         }
     }
-    cur_speed = speed;
+    else
+    {
+        speed = constrain(speed, -1, 1);
+        if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
+            || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
+        {
+            if (!is_stop_time)
+            {
+                stop_time_time = millis();
+                is_stop_time = true;
+            }
+        }
+
+        if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
+        {
+            if (!is_punch_time)
+            {
+                punch_time_time = millis();
+                is_punch_time = true;
+            }
+        }
+
+        if (speed != 0) // 명령이 정지가 아니라면
+        {
+            int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
+
+            if (speed > 0)
+            {
+                analogWrite(M1_PWM, pwm);
+                digitalWrite(M1_DIR1, HIGH);
+                digitalWrite(M1_DIR2, LOW);
+
+                analogWrite(M2_PWM, pwm);
+                digitalWrite(M2_DIR1, HIGH);
+                digitalWrite(M2_DIR2, LOW);
+            }
+
+            else if (speed < 0 && !back)
+            {
+                analogWrite(M1_PWM, pwm);
+                digitalWrite(M1_DIR1, LOW);
+                digitalWrite(M1_DIR2, HIGH);
+
+                analogWrite(M2_PWM, pwm);
+                digitalWrite(M2_DIR1, LOW);
+                digitalWrite(M2_DIR2, HIGH);
+            }
+
+            else
+            {
+                if (compute_steering > 0)
+                {
+                    analogWrite(M1_PWM, pwm);
+                    digitalWrite(M1_DIR1, LOW);
+                    digitalWrite(M1_DIR2, HIGH);
+
+                    analogWrite(M2_PWM, pwm * 0.6);
+                    digitalWrite(M2_DIR1, LOW);
+                    digitalWrite(M2_DIR2, HIGH);
+                }
+                else if (compute_steering < 0)
+                {
+                    analogWrite(M1_PWM, pwm * 0.6);
+                    digitalWrite(M1_DIR1, LOW);
+                    digitalWrite(M1_DIR2, HIGH);
+
+                    analogWrite(M2_PWM, pwm);
+                    digitalWrite(M2_DIR1, LOW);
+                    digitalWrite(M2_DIR2, HIGH);
+                }
+                else
+                {
+                    analogWrite(M1_PWM, pwm);
+                    digitalWrite(M1_DIR1, LOW);
+                    digitalWrite(M1_DIR2, HIGH);
+
+                    analogWrite(M2_PWM, pwm);
+                    digitalWrite(M2_DIR1, LOW);
+                    digitalWrite(M2_DIR2, HIGH);
+                }
+            }
+        }
+        cur_speed = speed;
+    }
 }
 
 // 뒷바퀴 모터회전
@@ -599,7 +675,7 @@ int parallel_left(int distance)
 int parallel_right(int distance)
 {
 
-     if (right > 1000 || compute_speed == 0)
+    if (right > 1000 || compute_speed == 0)
     {
         return 0;
     }
@@ -644,7 +720,7 @@ int right_change = 0;
 bool after_back_up = false;
 bool after_parking = false;
 bool after_finding_line = false;
-bool after_escape=false;
+bool after_escape = false;
 
 void parking_p()
 {
@@ -694,7 +770,7 @@ void parking_p()
         }
         else
         { //쭉 직진
-            compute_steering = parallel_left(90)*0.4;
+            compute_steering = parallel_left(90) * 0.4;
             compute_speed = 1;
         }
     }
@@ -729,7 +805,7 @@ void parking_p()
     { //주차 후
         if (ir_l_value <= detect_ir || ir_r_value <= detect_ir)
         {
-            //speed=0.1, turn_speed=0.1, right_steering=0.7, left_steering=-0.7, cnt_IR_max=15
+            // speed=0.1, turn_speed=0.1, right_steering=0.7, left_steering=-0.7, cnt_IR_max=15
             if (!parking_p_time_checker)
             {
                 macro_start_time = millis();
@@ -752,16 +828,19 @@ void parking_p()
             compute_speed = 0.3;
         }
     }
-    else if(!after_escape)
+    else if (!after_escape)
     {
-        if(left<side_detect && right<side_detect){
-            after_escape=true;
+        if (left < side_detect && right < side_detect)
+        {
+            after_escape = true;
         }
-        else{
-            line_tracing(0.1, 0.1,  0.8, -0.8, 10);
+        else
+        {
+            line_tracing(0.1, 0.1, 0.8, -0.8, 10);
         }
     }
-    else{
+    else
+    {
         line_tracing();
     }
 }
@@ -788,13 +867,16 @@ void parking_t1()
             compute_speed = 0.07;
             if (millis() - last_stop_line_time > 2000 && (ir_r_value <= detect_ir || ir_l_value <= detect_ir || center < 100))
             {
-                if (ir_r_value <= detect_ir){
+                if (ir_r_value <= detect_ir)
+                {
                     cnt_IR_R = 41;
                     flag_R = true;
-                }else if (center < 100){
+                }
+                else if (center < 100)
+                {
                     flag_R = true;
                 }
-                
+
                 line_tracing(0.3, 0.1, 1, -1, 40);
                 compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
                 t_flag1 = true;
@@ -808,24 +890,28 @@ void parking_t1()
     }
 }
 
-
-void parking_t2(){
-    if ((millis() - last_stop_line_time) < 1500){
-        if (flag_R){
+void parking_t2()
+{
+    if ((millis() - last_stop_line_time) < 1500)
+    {
+        if (flag_R)
+        {
             compute_steering = 0.3;
         }
-        else{
+        else
+        {
             compute_steering = -0.3;
         }
         compute_speed = -0.3;
     }
-    else{
-        line_tracing(0.3, 0.1, 1, -1, 50);
+    else
+    {
+        line_tracing(0.3, 0.1, 0.5, -0.5, 100);
     }
 }
 
-
-void parking_t3(){ 
+void parking_t3()
+{
     if (abs(prev_left - left) > 150 && millis() - left_change_time > 100)
     {
         left_change++;
@@ -833,7 +919,7 @@ void parking_t3(){
     }
 
     if (left_change >= 3 && millis() - left_change_time > 2000)
-    {   
+    {
         state++;
     }
     else
@@ -853,20 +939,20 @@ void parking_t4()
     else if (millis() - last_stop_line_time < 2000)
     {
         compute_speed = 0.5;
-        compute_steering = 0.2*parallel_right(100);
+        compute_steering = 0.2 * parallel_right(100);
     }
-    else {
+    else
+    {
         line_tracing(1, 0.5, 0.6, -0.6, 50);
     }
 }
 
-
 int obstacle_cnt = 0;
 
 void obstacle()
-{   
+{
     if (obstacle_cnt != 0 && center < center_stop && left < side_detect)
-    {   
+    {
         tone(SPEAKER_PIN, 392);
         compute_speed = 0;
         compute_steering = 0;
@@ -887,10 +973,11 @@ void obstacle()
         obstacle_cnt++;
     }
     else
-    {   
+    {
         line_tracing(0.7, 0.3, 0.9, -0.6, 100);
-        if (obstacle_cnt >= 20 && obstacle_cnt <= 600){
-           obstacle_cnt++;      
+        if (obstacle_cnt >= 20 && obstacle_cnt <= 600)
+        {
+            obstacle_cnt++;
         }
     }
 }
@@ -913,9 +1000,9 @@ bool CheckStopLine()
     }
 
     if (cnt_IR_BOTH >= 5)
-    { 
+    {
         last_stop_line_time = millis();
-        return true;  
+        return true;
     }
     return false;
 }
@@ -973,6 +1060,7 @@ void auto_driving(int state)
     }
 }
 
+bool song_friend = false;
 void we_are_all_friends()
 {
     if (millis() - melody_t > 200)
@@ -981,7 +1069,11 @@ void we_are_all_friends()
         melody_t = millis();
         melody_index++;
     }
-    melody_index = melody_index % 264;
+    if (melody_index >= 264)
+    {
+        melody_index = 0;
+        song_friend = false;
+    }
 }
 
 void road_201()
@@ -992,7 +1084,11 @@ void road_201()
         melody_t = millis();
         melody_index++;
     }
-    melody_index = melody_index % 96;
+    if (melody_index >= 96)
+    {
+        melody_index = 0;
+        song_friend = true;
+    }
 }
 
 void parking_song()
@@ -1040,14 +1136,15 @@ void setup()
     state = 3;
 }
 
-int i=0;
+int i = 0;
 void loop()
-{   
-    if (i%10==0){
+{
+    if (i % 10 == 0)
+    {
         prev_center = center;
         prev_left = left;
         prev_right = right;
-      
+
         center = GetDistance(FC_TRIG, FC_ECHO);
         left = GetDistance(L_TRIG, L_ECHO);
         right = GetDistance(R_TRIG, R_ECHO);
@@ -1064,6 +1161,15 @@ void loop()
     if (CheckStopLine())
     {
         state += 1;
+    }
+
+    if (song_friend)
+    {
+        we_are_all_friends();
+    }
+    else
+    {
+        road_201();
     }
 
     auto_driving(state);
