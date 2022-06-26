@@ -132,84 +132,7 @@ void SetSteering(float steering)
     servo.write(servoAngle);
 }
 
-// // 뒷바퀴 모터회전 ***original 코드
-// void SetSpeed(float speed)
-// {
-//     speed = constrain(speed, -1, 1);
-
-//     if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
-//         || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
-//     {
-//         cur_speed = 0;
-//         digitalWrite(M1_PWM, HIGH);
-//         digitalWrite(M1_DIR1, LOW);
-//         digitalWrite(M1_DIR2, LOW);
-
-//         digitalWrite(M2_PWM, HIGH);
-//         digitalWrite(M2_DIR1, LOW);
-//         digitalWrite(M2_DIR2, LOW);
-
-//         if (stop_time > 0)
-//             delay(stop_time);
-//     }
-
-//     if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
-//     {
-//         if (punch_time > 0)
-//         {
-//             if (speed > 0)
-//             {
-//                 analogWrite(M1_PWM, punch_pwm);
-//                 digitalWrite(M1_DIR1, HIGH);
-//                 digitalWrite(M1_DIR2, LOW);
-
-//                 analogWrite(M2_PWM, punch_pwm);
-//                 digitalWrite(M2_DIR1, HIGH);
-//                 digitalWrite(M2_DIR2, LOW);
-//             }
-//             else if (speed < 0)
-//             {
-//                 analogWrite(M1_PWM, punch_pwm);
-//                 digitalWrite(M1_DIR1, LOW);
-//                 digitalWrite(M1_DIR2, HIGH);
-
-//                 analogWrite(M2_PWM, punch_pwm);
-//                 digitalWrite(M2_DIR1, LOW);
-//                 digitalWrite(M2_DIR2, HIGH);
-//             }
-//             delay(punch_time);
-//         }
-//     }
-
-//     if (speed != 0) // 명령이 정지가 아니라면
-//     {
-//         int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
-
-//         if (speed > 0)
-//         {
-//             analogWrite(M1_PWM, pwm);
-//             digitalWrite(M1_DIR1, HIGH);
-//             digitalWrite(M1_DIR2, LOW);
-
-//             analogWrite(M2_PWM, pwm);
-//             digitalWrite(M2_DIR1, HIGH);
-//             digitalWrite(M2_DIR2, LOW);
-//         }
-//         else if (speed < 0)
-//         {
-//             analogWrite(M1_PWM, pwm);
-//             digitalWrite(M1_DIR1, LOW);
-//             digitalWrite(M1_DIR2, HIGH);
-
-//             analogWrite(M2_PWM, pwm);
-//             digitalWrite(M2_DIR1, LOW);
-//             digitalWrite(M2_DIR2, HIGH);
-//         }
-//     }
-//     cur_speed = speed;
-// }
-
-// 뒷바퀴 모터회전 **뒷바퀴 회전 수 조정
+// 뒷바퀴 모터회전 ***original 코드
 void SetSpeed(float speed)
 {
     speed = constrain(speed, -1, 1);
@@ -274,43 +197,120 @@ void SetSpeed(float speed)
         }
         else if (speed < 0)
         {
-            // 오른쪽을 볼 때
-            if (compute_steering > 0)
-            {
-                analogWrite(M1_PWM, max(pwm - 20, 10));
-                digitalWrite(M1_DIR1, LOW);
-                digitalWrite(M1_DIR2, HIGH);
+            analogWrite(M1_PWM, pwm);
+            digitalWrite(M1_DIR1, LOW);
+            digitalWrite(M1_DIR2, HIGH);
 
-                analogWrite(M2_PWM, min(pwm + 20, 255));
-                digitalWrite(M2_DIR1, LOW);
-                digitalWrite(M2_DIR2, HIGH);
-            }
-            // 왼쪽을 볼 때
-            else if (compute_steering < 0)
-            {
-                analogWrite(M1_PWM, min(pwm + 20, 255));
-                digitalWrite(M1_DIR1, LOW);
-                digitalWrite(M1_DIR2, HIGH);
-
-                analogWrite(M2_PWM, max(pwm - 20, 10));
-                digitalWrite(M2_DIR1, LOW);
-                digitalWrite(M2_DIR2, HIGH);
-            }
-            // 안 꺾음
-            else
-            {
-                analogWrite(M1_PWM, pwm);
-                digitalWrite(M1_DIR1, LOW);
-                digitalWrite(M1_DIR2, HIGH);
-
-                analogWrite(M2_PWM, pwm);
-                digitalWrite(M2_DIR1, LOW);
-                digitalWrite(M2_DIR2, HIGH);
-            }
+            analogWrite(M2_PWM, pwm);
+            digitalWrite(M2_DIR1, LOW);
+            digitalWrite(M2_DIR2, HIGH);
         }
     }
     cur_speed = speed;
 }
+
+// // 뒷바퀴 모터회전 **뒷바퀴 회전 수 조정
+// void SetSpeed(float speed)
+// {
+//     speed = constrain(speed, -1, 1);
+
+//     if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
+//         || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
+//     {
+//         cur_speed = 0;
+//         digitalWrite(M1_PWM, HIGH);
+//         digitalWrite(M1_DIR1, LOW);
+//         digitalWrite(M1_DIR2, LOW);
+
+//         digitalWrite(M2_PWM, HIGH);
+//         digitalWrite(M2_DIR1, LOW);
+//         digitalWrite(M2_DIR2, LOW);
+
+//         if (stop_time > 0)
+//             delay(stop_time);
+//     }
+
+//     if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
+//     {
+//         if (punch_time > 0)
+//         {
+//             if (speed > 0)
+//             {
+//                 analogWrite(M1_PWM, punch_pwm);
+//                 digitalWrite(M1_DIR1, HIGH);
+//                 digitalWrite(M1_DIR2, LOW);
+
+//                 analogWrite(M2_PWM, punch_pwm);
+//                 digitalWrite(M2_DIR1, HIGH);
+//                 digitalWrite(M2_DIR2, LOW);
+//             }
+//             else if (speed < 0)
+//             {
+//                 analogWrite(M1_PWM, punch_pwm);
+//                 digitalWrite(M1_DIR1, LOW);
+//                 digitalWrite(M1_DIR2, HIGH);
+
+//                 analogWrite(M2_PWM, punch_pwm);
+//                 digitalWrite(M2_DIR1, LOW);
+//                 digitalWrite(M2_DIR2, HIGH);
+//             }
+//             delay(punch_time);
+//         }
+//     }
+
+//     if (speed != 0) // 명령이 정지가 아니라면
+//     {
+//         int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
+
+//         if (speed > 0)
+//         {
+//             analogWrite(M1_PWM, pwm);
+//             digitalWrite(M1_DIR1, HIGH);
+//             digitalWrite(M1_DIR2, LOW);
+
+//             analogWrite(M2_PWM, pwm);
+//             digitalWrite(M2_DIR1, HIGH);
+//             digitalWrite(M2_DIR2, LOW);
+//         }
+//         else if (speed < 0)
+//         {
+//             // 오른쪽을 볼 때
+//             if (compute_steering > 0)
+//             {
+//                 analogWrite(M1_PWM, max(pwm - 20, 10));
+//                 digitalWrite(M1_DIR1, LOW);
+//                 digitalWrite(M1_DIR2, HIGH);
+
+//                 analogWrite(M2_PWM, min(pwm + 20, 255));
+//                 digitalWrite(M2_DIR1, LOW);
+//                 digitalWrite(M2_DIR2, HIGH);
+//             }
+//             // 왼쪽을 볼 때
+//             else if (compute_steering < 0)
+//             {
+//                 analogWrite(M1_PWM, min(pwm + 20, 255));
+//                 digitalWrite(M1_DIR1, LOW);
+//                 digitalWrite(M1_DIR2, HIGH);
+
+//                 analogWrite(M2_PWM, max(pwm - 20, 10));
+//                 digitalWrite(M2_DIR1, LOW);
+//                 digitalWrite(M2_DIR2, HIGH);
+//             }
+//             // 안 꺾음
+//             else
+//             {
+//                 analogWrite(M1_PWM, pwm);
+//                 digitalWrite(M1_DIR1, LOW);
+//                 digitalWrite(M1_DIR2, HIGH);
+
+//                 analogWrite(M2_PWM, pwm);
+//                 digitalWrite(M2_DIR1, LOW);
+//                 digitalWrite(M2_DIR2, HIGH);
+//             }
+//         }
+//     }
+//     cur_speed = speed;
+// }
 
 void line_tracing(float speed=1, float turn_speed=0.3, float right_steering=0.6, float left_steering=-0.6, int cnt_IR_max=20)
 { // 기본주행
@@ -431,15 +431,9 @@ int parallel_left(int distance)
 }
 int parallel_right(int distance)
 {
-    int p=parallel();
-
-    if (right > 2000 || compute_speed == 0)
+    if (right > 1000 || compute_speed == 0)
     {
         return 0;
-    }
-    else if (p != 0)
-    {
-        return p;
     }
     else
     { // 일단 전진 기준
@@ -560,7 +554,7 @@ void parking_p()
         }
         else
         {
-            compute_steering = parallel_right(100) * 0.5;
+            compute_steering = parallel() * 0.5;
             compute_speed = -0.1;
         }
     }
@@ -823,7 +817,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 2;
+    state = 3;
 }
 
 void loop()
