@@ -742,22 +742,22 @@ void parking_p()
             }
 
             // delay 제거하고 millis() 로 대체
-            if (millis() - macro_start_time < 2100)
+            if (millis() - macro_start_time < 2000)
             {
                 compute_steering = 1;
                 compute_speed = -0.5;
             }
-            else if (millis() - macro_start_time < 3100)
+            else if (millis() - macro_start_time < 3000)
             {
                 compute_steering = -1;
                 compute_speed = -0.5;
             }
-            else if (millis() - macro_start_time < 3900)
+            else if (millis() - macro_start_time < 3800)
             {
                 compute_steering = 0.7;
                 compute_speed = 0.3;
             }
-            else if (millis() - macro_start_time < 3950)
+            else if (millis() - macro_start_time < 3850)
             {
                 compute_steering = 0;
                 compute_speed = -0.3;
@@ -784,7 +784,7 @@ void parking_p()
                 parking_p_time_checker = true;
             }
 
-            if (millis() - macro_start_time < 2000)
+            if (millis() - macro_start_time < 700)
             {
                 compute_steering = 0;
                 compute_speed = 0;
@@ -841,7 +841,7 @@ void parking_p()
     }
     else
     {
-        line_tracing();
+        line_tracing(1, 0.3, 1, -1, 150);
     }
 }
 
@@ -857,7 +857,7 @@ void parking_t1()
     if (millis() - last_stop_line_time <= 5000 && center > center_detect)
     {
         compute_steering = 0.25;
-        compute_speed = 0.12;
+        compute_speed = 0.15;
     }
     else
     {
@@ -877,14 +877,14 @@ void parking_t1()
                     flag_R = true;
                 }
 
-                line_tracing(0.3, 0.1, 1, -1, 40);
-                compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
+                line_tracing(0.15, 0.1, 1, -1, 30);
+                compute_speed = 0.15 * ((compute_speed > 0) - (compute_speed < 0));
                 t_flag1 = true;
             }
         }
         else
         {
-            line_tracing(0.3, 0.1, 1, -1, 40);
+            line_tracing(0.15, 0.1, 1, -1, 30);
             compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
         }
     }
@@ -925,18 +925,18 @@ void parking_t3()
     else
     {
         compute_steering = 0.15 * parallel_right(90);
-        compute_speed = -0.25;
+        compute_speed = -0.4;
     }
 }
 
 void parking_t4()
 {
-    if (millis() - last_stop_line_time < 1000)
+    if (millis() - last_stop_line_time < 700)
     {
         compute_speed = 0;
         compute_steering = 0;
     }
-    else if (millis() - last_stop_line_time < 2000)
+    else if (millis() - last_stop_line_time < 1700)
     {
         compute_speed = 0.5;
         compute_steering = 0.2 * parallel_right(100);
@@ -958,7 +958,6 @@ void obstacle()
         compute_steering = 0;
         SetSteering(0);
         SetSpeed(0);
-        delay(5000);
     }
     else if (obstacle_cnt < 20 && center < center_detect && ir_l_value > detect_ir)
     { // 장애물 발견 & 왼쪽 차선 안보임
@@ -985,7 +984,7 @@ void obstacle()
 bool CheckStopLine()
 {
     // 방금 전에 정지선을 지나 온 경우
-    if (millis() - last_stop_line_time < 3000)
+    if (millis() - last_stop_line_time < 1700)
     {
         return false;
     }
@@ -1002,6 +1001,7 @@ bool CheckStopLine()
     if (cnt_IR_BOTH >= 5)
     {
         last_stop_line_time = millis();
+        cnt_IR_BOTH = 0;
         return true;
     }
     return false;
@@ -1009,7 +1009,7 @@ bool CheckStopLine()
 
 void intersection()
 {
-    if (millis() - last_stop_line_time < 1800)
+    if (millis() - last_stop_line_time < 700)
     {
         compute_speed = 0;
         compute_steering = 0;
