@@ -1032,7 +1032,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 3;
+    state = 0;
 }
 
 int i=0;
