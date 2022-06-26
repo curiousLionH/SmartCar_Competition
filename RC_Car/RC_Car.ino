@@ -77,6 +77,7 @@ int cnt_IR_L;
 // 노래
 unsigned long melody_t = 0;
 int melody_index = 0;
+
 int melody_road_201[] = {
     NOTE_G5, NOTE_F5, NOTE_E5, NOTE_D5, NOTE_E5, NOTE_C5, NOTE_G4, 0,
     NOTE_A4, NOTE_G4, NOTE_A4, NOTE_B4, NOTE_C5, NOTE_G5, 0, 0,
@@ -645,7 +646,6 @@ bool after_parking = false;
 bool after_finding_line = false;
 bool after_escape=false;
 
-int min_distance = 2000;
 void parking_p()
 {
 
@@ -811,7 +811,12 @@ void parking_t1()
 
 void parking_t2(){
     if ((millis() - last_stop_line_time) < 1500){
-        compute_steering = 0.3 * flag_R;
+        if (flag_R){
+            compute_steering = 0.3;
+        }
+        else{
+            compute_steering = -0.3;
+        }
         compute_speed = -0.3;
     }
     else{
@@ -970,9 +975,9 @@ void auto_driving(int state)
 
 void we_are_all_friends()
 {
-    if (millis() - melody_t > 300)
+    if (millis() - melody_t > 200)
     {
-        tone(SPEAKER_PIN, melody_we_are_all_friends[melody_index], 250);
+        tone(SPEAKER_PIN, melody_we_are_all_friends[melody_index], 150);
         melody_t = millis();
         melody_index++;
     }
@@ -1059,23 +1064,6 @@ void loop()
     if (CheckStopLine())
     {
         state += 1;
-        Serial.println(state);
-        if (state == 6){
-            melody_index = 0;
-        }
-        else if (state == 3){
-            melody_index = 0;
-        }else if (state == 7){
-            melody_index = 0;
-        } 
-    }
-
-    if (state == 6){
-        parking_song();
-    }else if (state > 0 && state < 3){
-        road_201();
-    }else if (state >= 3){
-        we_are_all_friends();
     }
 
     auto_driving(state);
