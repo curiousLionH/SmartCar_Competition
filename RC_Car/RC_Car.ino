@@ -39,7 +39,7 @@ float ir_l_value;
 int state;
 
 // 자동차 튜닝 파라미터 =====================================================================
-int detect_ir = 28; // 검출선이 흰색과 검정색 비교
+int detect_ir = 32; // 검출선이 흰색과 검정색 비교
 
 int punch_pwm = 220; // 정지 마찰력 극복 출력 (0 ~ 255)
 int punch_time = 40; // 정지 마찰력 극복 시간 (단위 msec)
@@ -417,7 +417,7 @@ bool forced_steering_right = false;
 bool forced_steering_left = false;
 unsigned long forced_steering_time = 0;
 
-void line_tracing(float speed = 0.8, float turn_speed = 0.2, float right_steering = 0.9, float left_steering = -0.9, int cnt_IR_max = 60)
+void line_tracing_hello(float speed = 0.8, float turn_speed = 0.2, float right_steering = 0.9, float left_steering = -0.9, int cnt_IR_max = 60)
 { // 기본주행
     // 후진은 위험한 상황이니까 전진보다 먼저 고려
     if (cnt_IR_R > cnt_IR_max)
@@ -495,7 +495,7 @@ void line_tracing(float speed = 0.8, float turn_speed = 0.2, float right_steerin
     }
 }
 
-void line_tracing_hi(float speed = 0.8, float turn_speed = 0.2, float right_steering = 0.9, float left_steering = -0.9, int cnt_IR_max = 60)
+void line_tracing(float speed = 0.8, float turn_speed = 0.2, float right_steering = 0.9, float left_steering = -0.9, int cnt_IR_max = 60)
 { // 기본주행
     // 후진은 위험한 상황이니까 전진보다 먼저 고려
     if (cnt_IR_R > cnt_IR_max)
@@ -701,7 +701,7 @@ void parking_p()
         else
         { //쭉 직진
             compute_steering = parallel_left(90) * 0.4;
-            compute_speed = 1;
+            compute_speed = 0.8;
         }
     }
     else if (!after_parking)
@@ -755,7 +755,7 @@ void parking_p()
         else
         {
             compute_steering = -0.5;
-            compute_speed = 0.3;
+            compute_speed = 0.2;
         }
     }
     else if (!after_escape)
@@ -786,7 +786,7 @@ void parking_t1()
     // 1. 좌회전
     if (!center_ok && center > center_detect)
     {
-        compute_steering = 0.25;
+        compute_steering = 0.2;
         compute_speed = 0.15;
     }
     else
@@ -891,7 +891,7 @@ void obstacle()
         SetSteering(0);
         SetSpeed(0);
     }
-    else if (obstacle_cnt < 20 && center < center_detect-25 && ir_l_value > detect_ir)
+    else if (obstacle_cnt < 20 && center < center_detect-20 && ir_l_value > detect_ir)
     { // 장애물 발견 & 왼쪽 차선 안보임
         compute_steering = -1;
         compute_speed = 0.3;
@@ -905,7 +905,7 @@ void obstacle()
     }
     else
     {
-        line_tracing(0.7, 0.3, 0.9, -0.6, 100);
+        line_tracing(0.4, 0.3, 0.9, -0.6, 50);
         if (obstacle_cnt >= 20 && obstacle_cnt <= 600)
         {
             obstacle_cnt++;
@@ -939,7 +939,7 @@ bool CheckStopLine()
     return false;
 }
 
-void intersection()
+void intersection1()
 {
     if (millis() - last_stop_line_time < 700)
     {
@@ -948,7 +948,20 @@ void intersection()
     }
     else
     {
-        line_tracing(1, 0.3, 1, -1, 150);
+        line_tracing(0.7, 0.3, 1, -1, 150);
+    }
+}
+
+void intersection2()
+{
+    if (millis() - last_stop_line_time < 700)
+    {
+        compute_speed = 0;
+        compute_steering = 0;
+    }
+    else
+    {
+        line_tracing(0.45, 0.3, 1, -1, 150);
     }
 }
 
@@ -963,10 +976,10 @@ void auto_driving(int state)
         parking_p();
         break;
     case 2: // 8자 주행 1
-        intersection();
+        intersection1();
         break;
     case 3: // 8자 주행 2
-        intersection();
+        intersection2();
         break;
     case 4: // T 주차 1
         parking_t1();
