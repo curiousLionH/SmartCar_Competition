@@ -75,14 +75,7 @@ int cnt_IR_R;
 int cnt_IR_L;
 // int cnt_IR_max = 20; // back을 하는 max 검출 카운트
 
-bool t_flag1 = false;
-bool t_flag2 = false;
-bool t_flag3 = false;
-bool wall_yes = false;
-bool wall_no = false;
 
-int obstacle_cnt = 0;
-bool obstacle_end = false;
 
 // 노래
 unsigned long melody_t;
@@ -655,11 +648,11 @@ int parallel_left(int distance)
     { // 일단 전진 기준
         // int sign_speed = (compute_speed > 0) - (compute_speed < 0);
 
-        if (left - distance > 10)
+        if (left - distance > 5)
         { // 왼쪽으로 꺾기
             return -1;
         }
-        else if (left - distance < -10)
+        else if (left - distance < -5)
         { // 오른쪽으로 꺾기
             return 1;
         }
@@ -680,11 +673,11 @@ int parallel_right(int distance)
     { // 일단 전진 기준
         // int sign_speed = (compute_speed > 0) - (compute_speed < 0);
 
-        if (right - distance > 10)
+        if (right - distance > 5)
         { // 오른쪽으로 꺾기
             return 1;
         }
-        else if (right - distance < -10)
+        else if (right - distance < -5)
         { // 왼쪽으로 꺾기
             return -1;
         }
@@ -840,107 +833,55 @@ void parking_p()
     }
 }
 
-int left_change = 0;
-unsigned long left_change_time = 0;
-
-void parking_t1()
+int turn_left = 0;
+int turn_left2 = 0;
+int go_back = 0;
+void parking_t1()  
 {
-    // 1. 좌회전
-    if (millis() - last_stop_line_time <= 600)
+    if (turn_left == 0)
     {
-        compute_steering = 0.4;
-        compute_speed = 0.12;
-    }
-    else if (!t_flag2 && millis() - last_stop_line_time > 600)
-    {
-        if (!t_flag1)
+        if (center < 200)
         {
-            compute_steering = -0.9;
-            compute_speed = 0.07;
-            if (millis() - last_stop_line_time > 2000 && (ir_r_value <= detect_ir || ir_l_value <= detect_ir || center < 150))
-            {
-                if (ir_l_value <= detect_ir){
-                    cnt_IR_R = 41;
-                }
-                line_tracing(0.3, 0.1, 1, -1, 40);
-                compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
-                t_flag1 = true;
-            }
+            compute_steering = -1;
+            compute_speed = 0.1;
+            if(ir_r_value <= detect_ir){
+                turn_left = 1;
+            }            
         }
         else
         {
-            line_tracing(0.3, 0.1, 1, -1, 40);
-            compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
+            compute_steering = 0;
+            compute_speed = 0.1;
         }
     }
-
+    else if(turn_left2==0){
+        //linetracing parameter 값 수정해야함
+        line_tracing(0.1, 0.1,  0.8, -0.8, 10);
+        if(left<side_detect && right<side_detect){
+            turn_left2=1;
+        }
+    }
     else
     {
-        line_tracing(0.3, 0.07, 1, -1, 40);
-        compute_speed = 0.07 * ((compute_speed > 0) - (compute_speed < 0));
+        compute_steering = parallel_right(95);
+        compute_speed = 0.3;
     }
 }
 
-
-void parking_t2(){
-    tone(SPEAKER_PIN, 294);
-    if ((millis() - last_stop_line_time) < 1500){
-        compute_steering = 0.3;
-        compute_speed = -0.3;
-    }
-    else{
-        line_tracing(0.3, 0.1, 1, -1, 50);
-    }
-}
-
-
-void parking_t3(){
-    tone(SPEAKER_PIN, 330);
-    compute_steering = 0.2 * parallel_right(90);
-    compute_speed = -0.2;
-    
-//    if ((millis()-last_stop_line_time) % 1500 <= 1100){
-//        compute_steering = 0.7 * parallel_right(90);
-//        compute_speed = -0.2;
-//    }else{
-//        compute_steering = 0;
-//        compute_speed = 0.1;
-//    }
-//     if (abs(prev_left - left) > 150 && millis() - left_change_time > 100)
-//     {
-//         left_change++;
-//         left_change_time = millis();
-//     }
-//
-//     if (left_change >= 3 && millis() - left_change_time > 2000)
-//     {   
-//         tone(SPEAKER_PIN, 262);
-//         state++;
-//     }
-//     else
-//     {
-//         compute_steering = 0.3 * parallel_right(90);
-//         compute_speed = -0.2;
-//     }
-}
-
-void parking_t4()
+void parking_t2()
 {
-    noTone(SPEAKER_PIN);
-    if (millis() - last_stop_line_time < 1000)
-    {
-        compute_speed = 0;
-        compute_steering = 0;
-    }
-    else if (millis() - last_stop_line_time < 2000)
-    {
-        compute_speed = 0.5;
-        compute_steering = 0.2*parallel_right(100);
-    }
-    else {
-        line_tracing(1, 0.5, 0.6, -0.6, 50);
-    }
+    compute_steering = parallel_right(90) * 0.3;
+    compute_speed = -0.2;
 }
+
+void parking_t3()
+{
+    compute_steering = parallel_right(95);
+    compute_speed = 0.5;
+}
+
+
+int obstacle_cnt = 0;
 
 void obstacle()
 {   
@@ -1059,16 +1000,16 @@ void auto_driving(int state)
     case 6: // T 주차 3
         parking_t3();
         break;
-    case 7: // T 주차 4
-        parking_t4();
+    // case 7: // T 주차 4
+    //     parking_t4();
+    //     break;
+    case 7: // 버스 피하기
+        obstacle();
         break;
     case 8: // 버스 피하기
         obstacle();
         break;
     case 9: // 버스 피하기
-        obstacle();
-        break;
-    case 10: // 버스 피하기
         obstacle();
         break;
     }
@@ -1138,7 +1079,7 @@ void setup()
 
     SetSteering(0);
     SetSpeed(0);
-    state = 0;
+    state = 3;
 }
 
 int i=0;
