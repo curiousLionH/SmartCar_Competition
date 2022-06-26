@@ -127,58 +127,6 @@ int melody_we_are_all_friends[] = { // 길이 264
     NOTE_E6, NOTE_E6, NOTE_F6, NOTE_G6, NOTE_D6, NOTE_C6, NOTE_B5, 0,
     NOTE_C6, 0, 0, 0, 0, 0, 0, 0};
 
-int melody_parking[] = {
-    // 48
-    NOTE_E7,
-    NOTE_DS7,
-    NOTE_E7,
-    NOTE_DS7,
-    NOTE_E7,
-    NOTE_B6,
-    NOTE_D7,
-    NOTE_C6,
-    NOTE_A6,
-    0,
-    0,
-    NOTE_C6,
-    NOTE_E6,
-    NOTE_A6,
-    NOTE_B6,
-    0,
-    0,
-    NOTE_E6,
-    NOTE_GS6,
-    NOTE_B6,
-    NOTE_C7,
-    0,
-    0,
-    NOTE_E6,
-    NOTE_E7,
-    NOTE_DS7,
-    NOTE_E7,
-    NOTE_DS7,
-    NOTE_E7,
-    NOTE_B6,
-    NOTE_D7,
-    NOTE_C6,
-    NOTE_A6,
-    0,
-    0,
-    NOTE_C6,
-    NOTE_E6,
-    NOTE_A6,
-    NOTE_B6,
-    0,
-    0,
-    NOTE_E6,
-    NOTE_C7,
-    NOTE_B6,
-    NOTE_A6,
-    0,
-    0,
-    0,
-};
-
 // 초음파 거리측정
 float GetDistance(int trig, int echo)
 {
@@ -214,113 +162,29 @@ void SetSteering(float steering)
 }
 
 // // 뒷바퀴 모터회전 ***original 코드
-// void SetSpeed(float speed)
-// {
-//     speed = constrain(speed, -1, 1);
-
-//     if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
-//         || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
-//     {
-//         cur_speed = 0;
-//         digitalWrite(M1_PWM, HIGH);
-//         digitalWrite(M1_DIR1, LOW);
-//         digitalWrite(M1_DIR2, LOW);
-
-//         digitalWrite(M2_PWM, HIGH);
-//         digitalWrite(M2_DIR1, LOW);
-//         digitalWrite(M2_DIR2, LOW);
-
-//         if (stop_time > 0)
-//             delay(stop_time);
-//     }
-
-//     if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
-//     {
-//         if (punch_time > 0)
-//         {
-//             if (speed > 0)
-//             {
-//                 analogWrite(M1_PWM, punch_pwm);
-//                 digitalWrite(M1_DIR1, HIGH);
-//                 digitalWrite(M1_DIR2, LOW);
-
-//                 analogWrite(M2_PWM, punch_pwm);
-//                 digitalWrite(M2_DIR1, HIGH);
-//                 digitalWrite(M2_DIR2, LOW);
-//             }
-//             else if (speed < 0)
-//             {
-//                 analogWrite(M1_PWM, punch_pwm);
-//                 digitalWrite(M1_DIR1, LOW);
-//                 digitalWrite(M1_DIR2, HIGH);
-
-//                 analogWrite(M2_PWM, punch_pwm);
-//                 digitalWrite(M2_DIR1, LOW);
-//                 digitalWrite(M2_DIR2, HIGH);
-//             }
-//             delay(punch_time);
-//         }
-//     }
-
-//     if (speed != 0) // 명령이 정지가 아니라면
-//     {
-//         int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
-
-//         if (speed > 0)
-//         {
-//             analogWrite(M1_PWM, pwm);
-//             digitalWrite(M1_DIR1, HIGH);
-//             digitalWrite(M1_DIR2, LOW);
-
-//             analogWrite(M2_PWM, pwm);
-//             digitalWrite(M2_DIR1, HIGH);
-//             digitalWrite(M2_DIR2, LOW);
-//         }
-//         else if (speed < 0)
-//         {
-//             analogWrite(M1_PWM, pwm);
-//             digitalWrite(M1_DIR1, LOW);
-//             digitalWrite(M1_DIR2, HIGH);
-
-//             analogWrite(M2_PWM, pwm);
-//             digitalWrite(M2_DIR1, LOW);
-//             digitalWrite(M2_DIR2, HIGH);
-//         }
-//     }
-//     cur_speed = speed;
-// }
-
-bool is_stop_time = false;
-unsigned long stop_time_time = 0;
-
-bool is_punch_time = false;
-unsigned long punch_time_time = 0;
-
-void SetSpeed(float speed, bool back = false)
+void SetSpeed_original(float speed)
 {
+    speed = constrain(speed, -1, 1);
 
-    if (is_stop_time)
+    if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
+        || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
     {
-        if (millis() - stop_time_time < stop_time)
-        {
+        cur_speed = 0;
+        digitalWrite(M1_PWM, HIGH);
+        digitalWrite(M1_DIR1, LOW);
+        digitalWrite(M1_DIR2, LOW);
 
-            cur_speed = 0;
-            digitalWrite(M1_PWM, HIGH);
-            digitalWrite(M1_DIR1, LOW);
-            digitalWrite(M1_DIR2, LOW);
+        digitalWrite(M2_PWM, HIGH);
+        digitalWrite(M2_DIR1, LOW);
+        digitalWrite(M2_DIR2, LOW);
 
-            digitalWrite(M2_PWM, HIGH);
-            digitalWrite(M2_DIR1, LOW);
-            digitalWrite(M2_DIR2, LOW);
-        }
-        else
-        {
-            is_stop_time = false;
-        }
+        if (stop_time > 0)
+            delay(stop_time);
     }
-    else if (is_punch_time)
+
+    if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
     {
-        if (millis() - punch_time_time < punch_time)
+        if (punch_time > 0)
         {
             if (speed > 0)
             {
@@ -342,100 +206,213 @@ void SetSpeed(float speed, bool back = false)
                 digitalWrite(M2_DIR1, LOW);
                 digitalWrite(M2_DIR2, HIGH);
             }
-        }
-        else
-        {
-            is_punch_time = false;
+            delay(punch_time);
         }
     }
-    else
+
+    if (speed != 0) // 명령이 정지가 아니라면
     {
-        speed = constrain(speed, -1, 1);
-        if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
-            || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
+        int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
+
+        if (speed > 0)
         {
-            if (!is_stop_time)
-            {
-                stop_time_time = millis();
-                is_stop_time = true;
-            }
-        }
+            analogWrite(M1_PWM, pwm);
+            digitalWrite(M1_DIR1, HIGH);
+            digitalWrite(M1_DIR2, LOW);
 
-        if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
+            analogWrite(M2_PWM, pwm);
+            digitalWrite(M2_DIR1, HIGH);
+            digitalWrite(M2_DIR2, LOW);
+        }
+        else if (speed < 0)
         {
-            if (!is_punch_time)
-            {
-                punch_time_time = millis();
-                is_punch_time = true;
-            }
+            analogWrite(M1_PWM, pwm);
+            digitalWrite(M1_DIR1, LOW);
+            digitalWrite(M1_DIR2, HIGH);
+
+            analogWrite(M2_PWM, pwm);
+            digitalWrite(M2_DIR1, LOW);
+            digitalWrite(M2_DIR2, HIGH);
         }
-
-        if (speed != 0) // 명령이 정지가 아니라면
-        {
-            int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
-
-            if (speed > 0)
-            {
-                analogWrite(M1_PWM, pwm);
-                digitalWrite(M1_DIR1, HIGH);
-                digitalWrite(M1_DIR2, LOW);
-
-                analogWrite(M2_PWM, pwm);
-                digitalWrite(M2_DIR1, HIGH);
-                digitalWrite(M2_DIR2, LOW);
-            }
-
-            else if (speed < 0 && !back)
-            {
-                analogWrite(M1_PWM, pwm);
-                digitalWrite(M1_DIR1, LOW);
-                digitalWrite(M1_DIR2, HIGH);
-
-                analogWrite(M2_PWM, pwm);
-                digitalWrite(M2_DIR1, LOW);
-                digitalWrite(M2_DIR2, HIGH);
-            }
-
-            else
-            {
-                if (compute_steering > 0)
-                {
-                    analogWrite(M1_PWM, pwm);
-                    digitalWrite(M1_DIR1, LOW);
-                    digitalWrite(M1_DIR2, HIGH);
-
-                    analogWrite(M2_PWM, pwm * 0.6);
-                    digitalWrite(M2_DIR1, LOW);
-                    digitalWrite(M2_DIR2, HIGH);
-                }
-                else if (compute_steering < 0)
-                {
-                    analogWrite(M1_PWM, pwm * 0.6);
-                    digitalWrite(M1_DIR1, LOW);
-                    digitalWrite(M1_DIR2, HIGH);
-
-                    analogWrite(M2_PWM, pwm);
-                    digitalWrite(M2_DIR1, LOW);
-                    digitalWrite(M2_DIR2, HIGH);
-                }
-                else
-                {
-                    analogWrite(M1_PWM, pwm);
-                    digitalWrite(M1_DIR1, LOW);
-                    digitalWrite(M1_DIR2, HIGH);
-
-                    analogWrite(M2_PWM, pwm);
-                    digitalWrite(M2_DIR1, LOW);
-                    digitalWrite(M2_DIR2, HIGH);
-                }
-            }
-        }
-        cur_speed = speed;
     }
+    cur_speed = speed;
+}
+
+bool is_stop_time = false;
+unsigned long stop_time_time = 0;
+
+bool is_punch_time = false;
+unsigned long punch_time_time = 0;
+
+void SetSpeed(float speed, bool back = false)
+{
+
+   if (is_stop_time)
+   {
+       if (millis() - stop_time_time < stop_time)
+       {
+
+           cur_speed = 0;
+           digitalWrite(M1_PWM, HIGH);
+           digitalWrite(M1_DIR1, LOW);
+           digitalWrite(M1_DIR2, LOW);
+
+           digitalWrite(M2_PWM, HIGH);
+           digitalWrite(M2_DIR1, LOW);
+           digitalWrite(M2_DIR2, LOW);
+       }
+       else
+       {
+           is_stop_time = false;
+       }
+   }
+   else if (is_punch_time)
+   {
+       if (millis() - punch_time_time < punch_time)
+       {
+           if (speed > 0)
+           {
+               analogWrite(M1_PWM, punch_pwm);
+               digitalWrite(M1_DIR1, HIGH);
+               digitalWrite(M1_DIR2, LOW);
+
+               analogWrite(M2_PWM, punch_pwm);
+               digitalWrite(M2_DIR1, HIGH);
+               digitalWrite(M2_DIR2, LOW);
+           }
+           else if (speed < 0)
+           {
+               analogWrite(M1_PWM, punch_pwm);
+               digitalWrite(M1_DIR1, LOW);
+               digitalWrite(M1_DIR2, HIGH);
+
+               analogWrite(M2_PWM, punch_pwm);
+               digitalWrite(M2_DIR1, LOW);
+               digitalWrite(M2_DIR2, HIGH);
+           }
+       }
+       else
+       {
+           is_punch_time = false;
+       }
+   }
+   else
+   {
+       speed = constrain(speed, -1, 1);
+       if ((cur_speed * speed < 0)            // 움직이는 중 반대 방향 명령이거나
+           || (cur_speed != 0 && speed == 0)) // 움직이다가 정지라면
+       {
+           if (!is_stop_time)
+           {
+               stop_time_time = millis();
+               is_stop_time = true;
+               
+               cur_speed = 0;
+               digitalWrite(M1_PWM, HIGH);
+               digitalWrite(M1_DIR1, LOW);
+               digitalWrite(M1_DIR2, LOW);
+
+               digitalWrite(M2_PWM, HIGH);
+               digitalWrite(M2_DIR1, LOW);
+               digitalWrite(M2_DIR2, LOW);
+           }
+       }
+
+       if (cur_speed == 0 && speed != 0) // 정지상태에서 출발이라면
+       {
+           if (!is_punch_time)
+           {
+               punch_time_time = millis();
+               is_punch_time = true;
+               if (speed > 0)
+               {
+                   analogWrite(M1_PWM, punch_pwm);
+                   digitalWrite(M1_DIR1, HIGH);
+                   digitalWrite(M1_DIR2, LOW);
+
+                   analogWrite(M2_PWM, punch_pwm);
+                   digitalWrite(M2_DIR1, HIGH);
+                   digitalWrite(M2_DIR2, LOW);
+               }
+               else if (speed < 0)
+               {
+                   analogWrite(M1_PWM, punch_pwm);
+                   digitalWrite(M1_DIR1, LOW);
+                   digitalWrite(M1_DIR2, HIGH);
+
+                   analogWrite(M2_PWM, punch_pwm);
+                   digitalWrite(M2_DIR1, LOW);
+                   digitalWrite(M2_DIR2, HIGH);
+               }
+           }
+       }
+
+       if (speed != 0) // 명령이 정지가 아니라면
+       {
+           int pwm = abs(speed) * (max_pwm - min_pwm) + min_pwm; // 0 ~ 255로 변환
+
+           if (speed > 0)
+           {
+               analogWrite(M1_PWM, pwm);
+               digitalWrite(M1_DIR1, HIGH);
+               digitalWrite(M1_DIR2, LOW);
+
+               analogWrite(M2_PWM, pwm);
+               digitalWrite(M2_DIR1, HIGH);
+               digitalWrite(M2_DIR2, LOW);
+           }
+
+           else if (speed < 0 && !back)
+           {
+               analogWrite(M1_PWM, pwm);
+               digitalWrite(M1_DIR1, LOW);
+               digitalWrite(M1_DIR2, HIGH);
+
+               analogWrite(M2_PWM, pwm);
+               digitalWrite(M2_DIR1, LOW);
+               digitalWrite(M2_DIR2, HIGH);
+           }
+
+           else
+           {
+               if (compute_steering > 0)
+               {
+                   analogWrite(M1_PWM, pwm);
+                   digitalWrite(M1_DIR1, LOW);
+                   digitalWrite(M1_DIR2, HIGH);
+
+                   analogWrite(M2_PWM, pwm * 0.6);
+                   digitalWrite(M2_DIR1, LOW);
+                   digitalWrite(M2_DIR2, HIGH);
+               }
+               else if (compute_steering < 0)
+               {
+                   analogWrite(M1_PWM, pwm * 0.6);
+                   digitalWrite(M1_DIR1, LOW);
+                   digitalWrite(M1_DIR2, HIGH);
+
+                   analogWrite(M2_PWM, pwm);
+                   digitalWrite(M2_DIR1, LOW);
+                   digitalWrite(M2_DIR2, HIGH);
+               }
+               else
+               {
+                   analogWrite(M1_PWM, pwm);
+                   digitalWrite(M1_DIR1, LOW);
+                   digitalWrite(M1_DIR2, HIGH);
+
+                   analogWrite(M2_PWM, pwm);
+                   digitalWrite(M2_DIR1, LOW);
+                   digitalWrite(M2_DIR2, HIGH);
+               }
+           }
+       }
+       cur_speed = speed;
+   }
 }
 
 // 뒷바퀴 모터회전
-void SetSpeed1(float speed)
+void SetSpeed_umm(float speed)
 {
     speed = constrain(speed, -1, 1);
 
@@ -875,10 +852,11 @@ void parking_t1()
                 else if (center < 100)
                 {
                     flag_R = true;
+                    cnt_IR_R = 41;
                 }
 
-                line_tracing(0.15, 0.1, 1, -1, 30);
-                compute_speed = 0.15 * ((compute_speed > 0) - (compute_speed < 0));
+                line_tracing(0.1, 0.1, 1, -1, 30);
+                compute_speed = 0.1 * ((compute_speed > 0) - (compute_speed < 0));
                 t_flag1 = true;
             }
         }
@@ -1091,17 +1069,6 @@ void road_201()
     }
 }
 
-void parking_song()
-{
-    if (millis() - melody_t > 300)
-    {
-        tone(SPEAKER_PIN, melody_parking[melody_index], 250);
-        melody_t = millis();
-        melody_index++;
-    }
-    melody_index = melody_index % 48;
-}
-
 void setup()
 {
     Serial.begin(115200);
@@ -1174,6 +1141,8 @@ void loop()
 
     auto_driving(state);
 
-    SetSteering(compute_steering);
+    if (!is_stop_time && !is_punch_time){
+        SetSteering(compute_steering);
+    }
     SetSpeed(compute_speed, drift);
 }
