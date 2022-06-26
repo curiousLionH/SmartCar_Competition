@@ -599,9 +599,6 @@ void parking_p()
     }
 }
 
-// bool t_flag1 = false;
-// bool t_flag2 = false;
-
 int turn_left = 0;
 int turn_left2 = 0;
 int go_back = 0;
