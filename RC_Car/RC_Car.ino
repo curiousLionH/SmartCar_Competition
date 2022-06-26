@@ -1173,6 +1173,17 @@ void loop()
     if (CheckStopLine())
     {
         state += 1;
+        if (state == 6){
+            melody_t = 0;
+        }
+    }
+
+    if (state == 6){
+        parking_song();
+    }else if (state > 0 && state < 3){
+        road_201();
+    }else if (state >= 3){
+        we_are_all_friends();
     }
 
     auto_driving(state);
