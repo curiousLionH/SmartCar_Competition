@@ -1016,7 +1016,7 @@ void intersection()
     }
     else
     {
-        line_tracing(1, 0.1, 1, -1, 150);
+        line_tracing(1, 0.3, 1, -1, 150);
     }
 }
 
